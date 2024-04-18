@@ -1,0 +1,4 @@
+.env
+.git
+build.sh
+/deploy-test
