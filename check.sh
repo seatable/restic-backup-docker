@@ -1,4 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env bash
+#
+# description of the script
+
+set -euo pipefail
+
+#
 
 lastLogfile="/var/log/check-last.log"
 lastMailLogfile="/var/log/check-mail-last.log"

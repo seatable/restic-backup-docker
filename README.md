@@ -87,7 +87,7 @@ The container is set up by setting environment variables and volumes.
 
 ## Example docker-compose
 
-```
+```yaml
 ---
 
 services:
@@ -107,12 +107,18 @@ image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.0.0}
       #- /opt/restic/logs:/var/log/
     environment:
       - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-/local} - RESTIC_PASSWORD=${RESTIC_PASSWORD:?Variable is not set or empty}
-      - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME} - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *}                    # Start backup always at 2:15 am.
-      - CHECK_CRON=${CHECK_CRON:-45 3 \* \* 6} # Start check every sunday at 3:45am - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G}              # Download max 1G of data from backup and check the data integrity
-      - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6} - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
-      - SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:-true} - SEATABLE_DATABASE_PASSWORD=${SEATABLE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
+      - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME}
+      - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *} # Start backup always at 2:15 am.
+      - CHECK_CRON=${CHECK_CRON:-45 3 \* \* 6} # Start check every sunday at 3:45am
+      - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G} # Download max 1G of data from backup and check the data integrity
+      - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
+      - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
+      - SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:-true}
+      - SEATABLE_DATABASE_PASSWORD=${SEATABLE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
       - SEATABLE_DATABASE_HOST=mariadb
-      - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true} - SEATABLE_BIGDATA_HOST=seatable-server - HEALTHCHECK_URL=${HEALTHCHECK_URL}
+      - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true}
+      - SEATABLE_BIGDATA_HOST=seatable-server
+      - HEALTHCHECK_URL=${HEALTHCHECK_URL}
 
     # must be in the same network as mariadb for dumps...
     # must not be in the same network as seatable-server. Big data backup is initiated via docker exec
