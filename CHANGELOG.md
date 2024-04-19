@@ -1,5 +1,11 @@
 # Changelog
 
-## v1.0.0 (restic 0.16.4)
+## v1.1.0 (19.04.2024)
+
+- restic mount support
+- basic image switched to debian
+- improved documentation of environment variables
+
+## v1.0.0 (05.04.2024)
 
 Initial release.
