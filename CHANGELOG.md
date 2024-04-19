@@ -1,8 +1,9 @@
 # Changelog
 
-## v1.1.1 (19.04.2024)
+## v1.1.3 (19.04.2024)
 
 - Cleanup of entry.sh
+- fix docker installation method
 
 ## v1.1.0 (19.04.2024)
 

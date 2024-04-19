@@ -17,20 +17,18 @@ RUN unzip rclone-${RCLONE_VERSION}-linux-amd64.zip && mv rclone-*-linux-amd64/rc
 ADD https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_amd64.bz2 /
 RUN bzip2 -v --decompress restic_${RESTIC_VERSION}_linux_amd64.bz2 && mv restic_*_linux_amd64 /bin/restic && chmod +x /bin/restic
 
-
 FROM ${BASE_IMAGE} as runtime-image
-
-#RUN apk add --update --no-cache curl mailx docker openssl tree bash
 
 RUN apt-get update && apt-get install -y \
 curl \
-docker \
 openssl \
 mailutils \
 bsd-mailx \
 tree \
 fuse \
 cron
+
+RUN curl -fsSL get.docker.com | bash
 
 COPY --from=build-image /bin/rclone /bin/rclone
 COPY --from=build-image /bin/restic /bin/restic
