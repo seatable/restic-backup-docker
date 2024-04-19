@@ -8,7 +8,7 @@ This container runs restic backups (and checks) in regular intervals.
 - Define a schedule for backup and integrity checks
 - Support for different targets (tested with: Local filesystem of the host, AWS, Backblaze and rest-server)
 - Healthcheck (https://healthchecks.io/) or mail notifications possible
-- Support restic mount inside the container to browse the backup files (???)
+- Support restic mount inside the container to browse the backup files
 - Partial and full restore possible
 
 Use with docker compose, latest yml files at seatable docker release github repo.
@@ -18,15 +18,6 @@ Use with docker compose, latest yml files at seatable docker release github repo
 Everything below `/data/` folder in the container will be part of the backup.
 All restic targets are supported like rest-server, S3, backblaze and even the same filesystem of the host.
 Executed via cron inside the container.
-
-### Hooks
-
-Container supports the execution of the following custom hooks (if available at the container).
-
-- /hooks/pre-backup.sh
-- /hooks/post-backup.sh
-- /hooks/pre-check.sh
-- /hooks/post-check.sh
 
 ### Commands
 
@@ -49,6 +40,19 @@ To execute a backup or the check the consistency manually, independent of the CR
 docker exec -it restic-backup backup
 docker exec -it restic-backup check
 ```
+
+### Hooks
+
+Container supports the execution of the following custom hooks (if available at the container).
+
+- /hooks/pre-backup.sh
+- /hooks/post-backup.sh
+- /hooks/pre-check.sh
+- /hooks/post-check.sh
+
+### Logs
+
+Logs are written inside the container to `/var/log/` and mounted as volume to `/opt/restic/logs`.
 
 ## Customize the Container
 
@@ -80,14 +84,6 @@ The container is set up by setting environment variables and volumes.
 | `B2_ACCOUNT_ID`              | Required only for backblaze backend     |                                                                                                 |
 | `B2_ACCOUNT_KEY`             | Required only for backblaze backend     |                                                                                                 |
 
-### Volumes
-
-- `/data` - This is the data that gets backed up. Just mount wherever you want to it in the container and restic will take care of the backup.
-
-### Logs
-
-Logs are written inside the container to `/var/log/` and mounted as volume to `/opt/restic/logs`.
-
 ## Example docker-compose
 
 ```yaml
@@ -95,9 +91,8 @@ Logs are written inside the container to `/var/log/` and mounted as volume to `/
 
 services:
 restic-backup:
-image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.0.0}
+image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.1.0}
     container_name: restic-backup
-    hostname: ${SEATABLE_SERVER_HOSTNAME:?Variable is not set or empty}
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -118,7 +113,7 @@ image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.0.0}
     environment:
       - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-/local}
       - RESTIC_PASSWORD=${RESTIC_PASSWORD:?Variable is not set or empty}
-      - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME}
+      - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME:-seatable}
       - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *} # Start backup always at 2:15 am.
       - CHECK_CRON=${CHECK_CRON:-45 3 \* \* 6} # Start check every sunday at 3:45am
       - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G} # Download max 1G of data from backup and check the data integrity
