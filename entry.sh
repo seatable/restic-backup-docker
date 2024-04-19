@@ -1,4 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env bash
+#
+# description of the script
+
+set -eo pipefail
+
+#
 
 echo "Starting container ..."
 
@@ -27,7 +33,7 @@ fi
 echo "Setup backup cron job with cron expression BACKUP_CRON: ${BACKUP_CRON}"
 echo "${BACKUP_CRON} /usr/bin/flock -n /var/run/backup.lock /bin/backup >> /var/log/cron.log 2>&1" > /var/spool/cron/crontabs/root
 
-# If CHECK_CRON is set we will enable automatic backup checking
+# If CHECK_CRON is set, automatic backup checking is enabled
 if [ -n "${CHECK_CRON}" ]; then
     echo "Setup check cron job with cron expression CHECK_CRON: ${CHECK_CRON}"
     echo "${CHECK_CRON} /usr/bin/flock -n /var/run/backup.lock /bin/check >> /var/log/cron.log 2>&1" >> /var/spool/cron/crontabs/root
@@ -36,8 +42,8 @@ fi
 # Make sure the file exists before we start tail
 touch /var/log/cron.log
 
-# start the cron deamon
-crond
+# start the cron daemon
+cron
 
 echo "Container started."
 

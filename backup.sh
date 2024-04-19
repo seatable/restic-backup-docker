@@ -1,4 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env bash
+#
+# description of the script
+
+set -eo pipefail
+
+#
 
 lastLogfile="/var/log/backup-last.log"
 lastMailLogfile="/var/log/mail-last.log"
@@ -63,7 +69,7 @@ if [[ $backupRC == 0 ]]; then
 else
     echo "Backup Failed with Status ${backupRC}"
     restic unlock
-    healthcheck /fail    
+    healthcheck /fail
 fi
 
 if [[ $backupRC == 0 ]] && [ -n "${RESTIC_FORGET_ARGS}" ]; then

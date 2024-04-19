@@ -1,4 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env bash
+#
+# description of the script
+
+set -eo pipefail
+
+#
 
 if [ $SEATABLE_DATABASE_DUMP == true ]; then
     echo "== Database Dumps =="

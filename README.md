@@ -87,7 +87,7 @@ The container is set up by setting environment variables and volumes.
 
 ## Example docker-compose
 
-```
+```yaml
 ---
 
 services:
@@ -96,7 +96,14 @@ image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.0.0}
     container_name: restic-backup
     hostname: ${SEATABLE_SERVER_HOSTNAME:?Variable is not set or empty}
     restart: unless-stopped
+    devices:
+      - /dev/fuse # needed for "restic mount" / access to the host filesystem
+    cap_add:
+      - SYS_ADMIN # needed for "restic mount" / grants sysadmin capabilities
+    security_opt:
+      - apparmor:unconfined # needed for "restic mount" / disable apparmor
     volumes:
+      - /opt/restic/mount:/mnt/mount:shared # needed for "restic mount" / :shared volume to see the content of mounted fuse filesystem from host
       - /var/run/docker.sock:/var/run/docker.sock
       - /opt/seatable-compose:/data/seatable-compose:ro
       - /opt/seatable-server/seatable:/data/seatable-server/seatable:ro
@@ -107,12 +114,18 @@ image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.0.0}
       #- /opt/restic/logs:/var/log/
     environment:
       - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-/local} - RESTIC_PASSWORD=${RESTIC_PASSWORD:?Variable is not set or empty}
-      - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME} - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *}                    # Start backup always at 2:15 am.
-      - CHECK_CRON=${CHECK_CRON:-45 3 \* \* 6} # Start check every sunday at 3:45am - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G}              # Download max 1G of data from backup and check the data integrity
-      - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6} - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
-      - SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:-true} - SEATABLE_DATABASE_PASSWORD=${SEATABLE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
+      - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME}
+      - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *} # Start backup always at 2:15 am.
+      - CHECK_CRON=${CHECK_CRON:-45 3 \* \* 6} # Start check every sunday at 3:45am
+      - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G} # Download max 1G of data from backup and check the data integrity
+      - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
+      - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
+      - SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:-true}
+      - SEATABLE_DATABASE_PASSWORD=${SEATABLE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
       - SEATABLE_DATABASE_HOST=mariadb
-      - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true} - SEATABLE_BIGDATA_HOST=seatable-server - HEALTHCHECK_URL=${HEALTHCHECK_URL}
+      - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true}
+      - SEATABLE_BIGDATA_HOST=seatable-server
+      - HEALTHCHECK_URL=${HEALTHCHECK_URL}
 
     # must be in the same network as mariadb for dumps...
     # must not be in the same network as seatable-server. Big data backup is initiated via docker exec
@@ -147,13 +160,22 @@ docker exec -it restic-backup restic restore <snapshot> --include /data/seatable
 
 ### Mount
 
-Mounting of a snapshot is not working ... fusemount???
+Note that restic mount uses "FUSE" (Filesystem in Userspace).
+This kernel component from the hosts system must be made accessible to the container.
+This can be done with the "privileged" flag in the docker-compose file. (not recommended)
+Or via multiple other parameters during runtime. These are commentated in the restic.yml compose section of this Readme.
 
+```bash
+# it is recommended to use screen or another terminal multiplexer for this command
+screen -S restic-mount
+docker exec -it restic-backup restic mount /mnt/mount
+# press "Ctrl + a" and then "d" to detach from the screen
+ls /opt/restic/mount
+```
 ## Open topics
 
-[ ] logging to stdout instead of log files
-[ ] Mail notification if something goes wrong -> mailx documentation
-[ ] clarification why restic mount is not working
+- [ ] logging to stdout instead of log files
+- [ ] Mail notification if something goes wrong -> mailx documentation
 
 ```
 
