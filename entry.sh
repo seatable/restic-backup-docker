@@ -2,7 +2,7 @@
 #
 # description of the script
 
-set -eo pipefail
+#set -eo pipefail
 
 #
 
