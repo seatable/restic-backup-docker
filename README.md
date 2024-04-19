@@ -164,4 +164,8 @@ screen -S restic-mount
 docker exec -it restic-backup restic mount /mnt/mount
 # press "Ctrl + a" and then "d" to detach from the screen
 ls /opt/restic/mount
+# now you can browse your backup data
+# to stop the mounting, return to your screen session with
+screen -r
+# press "Ctrl + c" to stop the mounting
 ```
