@@ -157,9 +157,9 @@ Mounting of a snapshot is not working ... fusemount???
 
 ## Open topics
 
-[ ] logging to stdout instead of log files
-[ ] Mail notification if something goes wrong -> mailx documentation
-[ ] clarification why restic mount is not working
+- [ ] logging to stdout instead of log files
+- [ ] Mail notification if something goes wrong -> mailx documentation
+- [ ] clarification why restic mount is not working
 
 ```
 
