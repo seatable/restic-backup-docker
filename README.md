@@ -96,7 +96,14 @@ image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.0.0}
     container_name: restic-backup
     hostname: ${SEATABLE_SERVER_HOSTNAME:?Variable is not set or empty}
     restart: unless-stopped
+    devices:
+      - /dev/fuse # needed for "restic mount" / access to the host filesystem
+    cap_add:
+      - SYS_ADMIN # needed for "restic mount" / grants sysadmin capabilities
+    security_opt:
+      - apparmor:unconfined # needed for "restic mount" / disable apparmor
     volumes:
+      - /opt/restic/mount:/mnt/mount:shared # needed for "restic mount" / :shared volume to see the content of mounted fuse filesystem from host
       - /var/run/docker.sock:/var/run/docker.sock
       - /opt/seatable-compose:/data/seatable-compose:ro
       - /opt/seatable-server/seatable:/data/seatable-server/seatable:ro
@@ -153,13 +160,22 @@ docker exec -it restic-backup restic restore <snapshot> --include /data/seatable
 
 ### Mount
 
-Mounting of a snapshot is not working ... fusemount???
+Note that restic mount uses "FUSE" (Filesystem in Userspace).
+This kernel component from the hosts system must be made accessible to the container.
+This can be done with the "privileged" flag in the docker-compose file. (not recommended)
+Or via multiple other parameters during runtime. These are commentated in the restic.yml compose section of this Readme.
 
+```bash
+# it is recommended to use screen or another terminal multiplexer for this command
+screen -S restic-mount
+docker exec -it restic-backup restic mount /mnt/mount
+# press "Ctrl + a" and then "d" to detach from the screen
+ls /opt/restic/mount
+```
 ## Open topics
 
 - [ ] logging to stdout instead of log files
 - [ ] Mail notification if something goes wrong -> mailx documentation
-- [ ] clarification why restic mount is not working
 
 ```
 

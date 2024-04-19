@@ -29,6 +29,7 @@ openssl \
 mailutils \
 bsd-mailx \
 tree \
+fuse \
 cron
 
 COPY --from=build-image /bin/rclone /bin/rclone
