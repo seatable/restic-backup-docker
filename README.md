@@ -74,7 +74,7 @@ The container is set up by setting environment variables and volumes.
 | `SEATABLE_BIGDATA_HOST`      | Name of the SeaTable Server container   | `seatable-server`                                                                               |
 | `HEALTHCHECK_URL`            | healthcheck.io server check url         | `https://healthcheck.io/ping/a444061a`                                                          |
 | `MAILX_ARGS`                 | SMTP settings for mail notification     | `-S smtp=smtp.example.com -S smtp-use-starttls -S smtp-auth-user=... -S smtp-auth-password=...` |
-| `AWS_DEFAULT_REGION`         | Required only for S3 backend            |                                                                                                 |
+| `AWS_DEFAULT_REGION`         | Required only for S3 backend            | `eu-west-1`                                                                                     |
 | `AWS_ACCESS_KEY_ID`          | Required only for S3 backend            |                                                                                                 |
 | `AWS_SECRET_ACCESS_KEY_ID`   | Required only for S3 backend            |                                                                                                 |
 | `B2_ACCOUNT_ID`              | Required only for backblaze backend     |                                                                                                 |
@@ -86,7 +86,7 @@ The container is set up by setting environment variables and volumes.
 
 ### Logs
 
-...
+Logs are written inside the container to `/var/log/` and mounted as volume to `/opt/restic/logs`.
 
 ## Example docker-compose
 
@@ -106,9 +106,9 @@ image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.0.0}
       - /opt/restic/local:/local
       - /opt/restic/restore:/restore
       - /opt/restic/cache:/root/.cache/restic
+      - /opt/restic/hooks:/hooks:ro
+      - /opt/restic/logs:/var/log/
       - /opt/restic/mount:/mnt/mount:shared # needed for "restic mount" / :shared volume to see the content of mounted fuse filesystem from host
-      #- /opt/restic/hooks:/hooks:ro
-      #- /opt/restic/logs:/var/log/
     devices:
       - /dev/fuse # needed for "restic mount" / access to the host filesystem
     cap_add:
@@ -160,10 +160,9 @@ docker exec -it restic-backup restic restore <snapshot> --include /data/seatable
 
 ### Mount
 
-Note that restic mount uses "FUSE" (Filesystem in Userspace).
-This kernel component from the hosts system must be made accessible to the container.
-This can be done with the "privileged" flag in the docker-compose file. (not recommended)
-Or via multiple other parameters during runtime. These are commentated in the restic.yml compose section of this Readme.
+`restic mount` allows to mount a snapshot to make it accessable like a local filesystem. It uses "FUSE" (Filesystem in Userspace), which requires that the FUSE kernel component from the hosts system must be made accessible to the container.
+
+This can be done either with the "privileged" flag in the docker-compose file, which is not recommended or via multiple other parameters during runtime. If you don't want to use this feature, you can easily comment or remove the corresponding lines from the yml file.
 
 ```bash
 # it is recommended to use screen or another terminal multiplexer for this command
@@ -172,8 +171,3 @@ docker exec -it restic-backup restic mount /mnt/mount
 # press "Ctrl + a" and then "d" to detach from the screen
 ls /opt/restic/mount
 ```
-
-## Open topics
-
-- [ ] logging to stdout instead of log files
-- [ ] Mail notification if something goes wrong -> mailx documentation
