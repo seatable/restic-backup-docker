@@ -8,11 +8,6 @@ set -eo pipefail
 
 echo "Starting container ..."
 
-if [ -n "${NFS_TARGET}" ]; then
-    echo "Mounting NFS based on NFS_TARGET: ${NFS_TARGET}"
-    mount -o nolock -v ${NFS_TARGET} /local
-fi
-
 restic snapshots ${RESTIC_INIT_ARGS} &>/dev/null
 status=$?
 echo "Check Repo status $status"

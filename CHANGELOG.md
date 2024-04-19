@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.1 (19.04.2024)
+
+- Cleanup of entry.sh
+
 ## v1.1.0 (19.04.2024)
 
 - restic mount support
