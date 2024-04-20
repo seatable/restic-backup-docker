@@ -13,15 +13,15 @@ curl
 
 # Get rclone binary
 ADD https://github.com/rclone/rclone/releases/download/${RCLONE_VERSION}/rclone-${RCLONE_VERSION}-linux-amd64.zip /
-RUN unzip rclone-${RCLONE_VERSION}-linux-amd64.zip && mv rclone-*-linux-amd64/rclone /bin/rclone && chmod +x /bin/rclone
+RUN unzip rclone-${RCLONE_VERSION}-linux-amd64.zip && mv rclone-*-linux-amd64/rclone /bin/rclone
 
 # Get restic binary binary
 ADD https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_amd64.bz2 /
-RUN bzip2 -v --decompress restic_${RESTIC_VERSION}_linux_amd64.bz2 && mv restic_*_linux_amd64 /bin/restic && chmod +x /bin/restic
+RUN bzip2 -v --decompress restic_${RESTIC_VERSION}_linux_amd64.bz2 && mv restic_*_linux_amd64 /bin/restic
 
 # Get docker binary 
 ADD https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz /
-RUN tar --extract --file /tmp/docker-${DOCKER_VERSION}.tgz --directory /tmp/ --strip-components 1 && rm /tmp/docker.tgz
+RUN tar --extract --file docker-${DOCKER_VERSION}.tgz --directory /tmp/ --strip-components 1
 
 FROM ${BASE_IMAGE} as runtime-image
 
@@ -37,20 +37,6 @@ RUN \
         cron \
     && apt-get clean
 
-# option 1
-# works but probably to big?
-#RUN curl -fsSL get.docker.com | bash
-
-# option 2
-#RUN apt-get install -y \
-#    apt-transport-https ca-certificates gnupg lsb-release \
-#    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
-#    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
-#       | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-#    && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io \
-#    && apt-get clean
-
-# option 3
 # get rclone and restic from build-image
 COPY --from=build-image /bin/rclone /bin/rclone
 COPY --from=build-image /bin/restic /bin/restic
@@ -58,6 +44,7 @@ COPY --from=build-image /tmp/docker /usr/local/bin/docker
 
 RUN mkdir -p /local /var/spool/cron/crontabs /var/log \
     && touch /var/log/cron.log \
+    && touch /var/log/restic-backup.log \
     && chmod +x /bin/rclone /bin/restic /usr/local/bin/docker
 
 # /data is the dir where you have to put the data to be backed up
@@ -65,8 +52,10 @@ VOLUME /data
 
 COPY backup.sh /bin/backup
 COPY check.sh /bin/check
-COPY entry.sh /entry.sh
+COPY entry.sh /bin/entry.sh
+COPY log.sh /bin/log.sh
 COPY pre-default.sh /bin/pre-default.sh
+RUN chmod +x /bin/backup /bin/check /bin/entry.sh /bin/log.sh /bin/pre-default.sh
 
-ENTRYPOINT ["/entry.sh"]
+ENTRYPOINT ["/bin/entry.sh"]
 CMD ["tail","-fn0","/var/log/cron.log"]

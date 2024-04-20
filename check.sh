@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 #
-# description of the script
+# Checks data integrity (execute manually or by CHECK_CRON schedule)
+# - restic check
 
 set -eo pipefail
-
-#
 
 lastLogfile="/var/log/check-last.log"
 lastMailLogfile="/var/log/check-mail-last.log"
