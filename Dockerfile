@@ -21,18 +21,21 @@ RUN bzip2 -v --decompress restic_${RESTIC_VERSION}_linux_amd64.bz2 && mv restic_
 
 # Get docker binary 
 ADD https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz /
-RUN tar --extract --file /tmp/docker.tgz --directory /tmp/ --strip-components 1 && rm /tmp/docker.tgz
+RUN tar --extract --file /tmp/docker-${DOCKER_VERSION}.tgz --directory /tmp/ --strip-components 1 && rm /tmp/docker.tgz
 
 FROM ${BASE_IMAGE} as runtime-image
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
-curl \
-openssl \
-mailutils \
-bsd-mailx \
-tree \
-fuse \
-cron
+RUN \
+    apt-get update \
+    && apt-get install --no-install-recommends -y \
+        curl \
+        openssl \
+        mailutils \
+        bsd-mailx \
+        tree \
+        fuse \
+        cron \
+    && apt-get clean
 
 # option 1
 # works but probably to big?
@@ -53,9 +56,8 @@ COPY --from=build-image /bin/rclone /bin/rclone
 COPY --from=build-image /bin/restic /bin/restic
 COPY --from=build-image /tmp/docker /usr/local/bin/docker
 
-RUN \
-    mkdir -p /local /var/spool/cron/crontabs /var/log \
-    touch /var/log/cron.log \
+RUN mkdir -p /local /var/spool/cron/crontabs /var/log \
+    && touch /var/log/cron.log \
     && chmod +x /bin/rclone /bin/restic /usr/local/bin/docker
 
 # /data is the dir where you have to put the data to be backed up
