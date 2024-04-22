@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.3 (22.04.2024)
+
+- add ca-certificates to the Dockerfile
+
 ## v1.2.2 (22.04.2024)
 
 - remove restic mount
