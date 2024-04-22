@@ -40,7 +40,7 @@ else
 fi
 
 log "INFO" "Starting Backup"
-echo "Starting Backup" > $lastLogfile
+echo "Starting Backup at $(date +"%Y-%m-%d %H:%M:%S")" > $lastLogfile
 log "DEBUG" "BACKUP_CRON: ${BACKUP_CRON}"
 log "DEBUG" "RESTIC_TAG: ${RESTIC_TAG}"
 log "DEBUG" "RESTIC_FORGET_ARGS: ${RESTIC_FORGET_ARGS}"
@@ -80,6 +80,7 @@ fi
 
 end=`date +%s`
 log "INFO" "Finished Backup after $((end-start)) seconds"
+echo "Finished Backup at $(date +"%Y-%m-%d %H:%M:%S") after $((end-start)) seconds" >> $lastLogfile
 
 if [ -n "${MAILX_ARGS}" ]; then
     log "INFO" "Executing mail command"

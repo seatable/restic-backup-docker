@@ -1,11 +1,12 @@
 # Changelog
 
-## v1.2.0 (xx.xx.2024)
+## v1.2.0 (22.04.2024)
 
 - LOG_LEVEL and LOG_TYPE added
 - smaller container image
 - cron rework
 - Timezone support added
+- new tag naming (v1.2.0 or pre-v1.2.0)
 
 ## v1.1.4 (19.04.2024)
 

@@ -35,7 +35,7 @@ fi
 
 
 log "INFO" "Starting Check"
-echo "Starting Check" > $lastLogfile
+echo "Starting Check at $(date +"%Y-%m-%d %H:%M:%S")" > $lastLogfile
 log "DEBUG" "BACKUP_CRON: ${BACKUP_CRON}"
 log "DEBUG" "RESTIC_TAG: ${RESTIC_TAG}"
 log "DEBUG" "RESTIC_FORGET_ARGS: ${RESTIC_FORGET_ARGS}"
@@ -66,6 +66,7 @@ fi
 
 end=`date +%s`
 log "INFO" "Finished Check after $((end-start)) seconds"
+echo "Finished Check at $(date +"%Y-%m-%d %H:%M:%S") after $((end-start)) seconds" >> $lastLogfile
 
 if [ -n "${MAILX_ARGS}" ]; then
     log "INFO" "Executing mail command"

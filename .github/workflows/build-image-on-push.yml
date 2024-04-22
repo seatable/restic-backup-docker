@@ -4,8 +4,8 @@ name: Build and push containers
 on:
   push:
     tags:
-      - "testing-v*.*.*"
-      - "release-v*.*.*"
+      - "v*.*.*"
+      - "pre-v*.*.*"
 
 jobs:
   init-vars:
@@ -18,7 +18,7 @@ jobs:
       - name: Validate github.ref format in case of others triggers used
         id: validate_github_ref
         run: |
-          if [[ ! "${{ github.ref }}" =~ ^refs/tags/(testing|release)-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ ! "${{ github.ref }}" =~ ^refs/tags/(pre-|)v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Invalid github.ref format"
             exit 1
           fi
@@ -32,9 +32,9 @@ jobs:
       - name: Set set_image_tag_prefix to empty or "testing" depending on git tag prefix
         id: set_image_tag_prefix
         run: |
-          if [[ "${{ steps.extract_github_ref_prefix.outputs.git_tag_prefix }}" == "testing" ]]; then
+          if [[ "${{ steps.extract_github_ref_prefix.outputs.git_tag_prefix }}" == "pre-" ]]; then
             echo "image_tag_prefix=testing-" >> $GITHUB_OUTPUT
-          elif [[ "${{ steps.extract_github_ref_prefix.outputs.git_tag_prefix }}" == "release" ]]; then
+          elif [[ "${{ steps.extract_github_ref_prefix.outputs.git_tag_prefix }}" == "" ]]; then
             echo "image_tag_prefix=" >> $GITHUB_OUTPUT
           fi
 
