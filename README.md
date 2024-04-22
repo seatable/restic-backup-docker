@@ -176,3 +176,11 @@ ls /opt/restic/mount
 screen -r
 # press "Ctrl + c" to stop the mounting
 ```
+
+Don't forget to unmount the mounted backup, otherwise you will receive the following error from the docker daemon if you want to restart or update your containers.
+
+```bash
+Error response from daemon: error while creating mount source path '/opt/restic/mount': mkdir /opt/restic/mount: file exists
+```
+
+If you forgot to unmount, you can force the unmout as root from the host with `umount /opt/restic/mount`.
