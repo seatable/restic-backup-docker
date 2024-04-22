@@ -6,21 +6,6 @@
 
 source /bin/log.sh
 
-# set default values for all other environment variables
-export BACKUP_CRON=${BACKUP_CRON:="20 2 * * *"}
-export CHECK_CRON=${CHECK_CRON:="40 3 * * 6"}
-export LOG_LEVEL=${LOG_LEVEL:="INFO"}
-export LOG_TYPE=${LOG_TYPE:="stdout"}
-export RESTIC_TAG=${RESTIC_TAG:="seatable"}
-export RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:="1G"}
-export RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:=" --prune --keep-daily 6 --keep-monthly 6"}
-export RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:=" --exclude=/data/logs --exclude-if-present .exclude_from_backup"}
-export SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:="false"}
-export SEATABLE_DATABASE_HOST=${SEATABLE_DATABASE_HOST:="mariadb"}
-export SEATABLE_DATABASE_USER=${SEATABLE_DATABASE_USER:="root"}
-export SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:="false"}
-export SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:="seatable-server"}
-
 # check for valid LOG_LEVEL
 if ! [[ "$LOG_LEVEL" =~ ^(INFO|WARNING|DEBUG|ERROR)$ ]]; then
     LOG_LEVEL="ERROR";

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.4 (22.04.2024)
+
+- default values for manual execution
+
 ## v1.2.3 (22.04.2024)
 
 - add ca-certificates to the Dockerfile
