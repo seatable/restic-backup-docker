@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.1 (22.04.2024)
+
+- fix problems with container stop
+
 ## v1.2.0 (22.04.2024)
 
 - LOG_LEVEL and LOG_TYPE added

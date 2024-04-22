@@ -86,7 +86,8 @@ echo '
 # An empty line is required at the end of this file for a valid cron file.
 ' >> /etc/crontab
 
-log "DEBUG" "start the cron daemon now with the command: $@"
+log "DEBUG" "start the cron daemon now."
+cron -f -L 2
 
-log "INFO" "Container started successful. The restic repository is initialized, cron daemon runs... Ready for backup!"
 exec "$@"
+log "INFO" "Container started successful. The restic repository is initialized, cron daemon runs... Ready for backup!"

@@ -59,4 +59,3 @@ COPY pre-default.sh /bin/pre-default.sh
 RUN chmod +x /bin/backup /bin/check /bin/entry.sh /bin/log.sh /bin/pre-default.sh
 
 ENTRYPOINT ["/bin/entry.sh"]
-CMD ["cron", "-f", "-L", "2"]
