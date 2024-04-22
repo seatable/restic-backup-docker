@@ -87,7 +87,6 @@ echo '
 ' >> /etc/crontab
 
 log "DEBUG" "start the cron daemon now."
-cron -f -L 2
 
-exec "$@"
 log "INFO" "Container started successful. The restic repository is initialized, cron daemon runs... Ready for backup!"
+exec "$@"

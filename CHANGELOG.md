@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.2 (22.04.2024)
+
+- remove restic mount
+
 ## v1.2.1 (22.04.2024)
 
 - fix problems with container stop

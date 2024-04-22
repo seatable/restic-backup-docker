@@ -8,7 +8,6 @@ This container runs restic backups (and checks) in regular intervals.
 - Define a schedule for backup and integrity checks
 - Support for different targets (tested with: Local filesystem of the host, AWS, Backblaze and rest-server)
 - Healthcheck (https://healthchecks.io/) or mail notifications possible
-- Support restic mount inside the container to browse the backup files
 - Partial and full restore possible
 
 Use with docker compose, latest yml files at seatable docker release github repo.
@@ -106,13 +105,6 @@ services:
       - /opt/restic/cache:/root/.cache/restic
       - /opt/restic/hooks:/hooks:ro
       - /opt/restic/logs:/var/log/restic
-      # - /opt/restic/mount:/mnt/mount:shared # needed for "restic mount" / :shared volume to see the content of mounted fuse filesystem from host
-    # devices:
-    #  - /dev/fuse # needed for "restic mount" / access to the host filesystem
-    #cap_add:
-    #  - SYS_ADMIN # needed for "restic mount" / grants sysadmin capabilities
-    #security_opt:
-    #  - apparmor:unconfined # needed for "restic mount" / disable apparmor
     environment:
       - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:?Variable is not set or empty}
       - RESTIC_PASSWORD=${RESTIC_PASSWORD:?Variable is not set or empty}
@@ -161,26 +153,4 @@ docker exec -it restic-backup restic restore <snapshot> --include /data/seatable
 
 ### Mount
 
-`restic mount` allows to mount a snapshot to make it accessable like a local filesystem. It uses "FUSE" (Filesystem in Userspace), which requires that the FUSE kernel component from the hosts system must be made accessible to the container.
-
-This can be done either with the "privileged" flag in the docker-compose file, which is not recommended or via multiple other parameters during runtime. If you want to use this feature, you have to uncomment the corresponding lines from the yml file.
-
-```bash
-# it is recommended to use screen or another terminal multiplexer for this command
-screen -S restic-mount
-docker exec -it restic-backup restic mount /mnt/mount
-# press "Ctrl + a" and then "d" to detach from the screen
-ls /opt/restic/mount
-# now you can browse your backup data
-# to stop the mounting, return to your screen session with
-screen -r
-# press "Ctrl + c" to stop the mounting
-```
-
-Don't forget to unmount the mounted backup, otherwise you will receive the following error from the docker daemon if you want to restart or update your containers.
-
-```bash
-Error response from daemon: error while creating mount source path '/opt/restic/mount': mkdir /opt/restic/mount: file exists
-```
-
-If you forgot to unmount, you can force the unmout as root from the host with `umount /opt/restic/mount`.
+`restic mount` allows to mount a snapshot to make it accessable like a local filesystem. It uses "FUSE" (Filesystem in Userspace), which requires that the FUSE kernel component from the hosts system must be made accessible to the container. FUSE in a docker setup creates a lot of problems. Therefore we removed everything that is connected with mount. Please don't use it.
