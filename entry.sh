@@ -8,32 +8,61 @@ set -eo pipefail
 
 source /bin/log.sh
 
+# set default values for all other environment variables
+export BACKUP_CRON=${BACKUP_CRON:="20 2 * * *"}
+export CHECK_CRON=${CHECK_CRON:="40 3 * * 6"}
+export LOG_LEVEL=${LOG_LEVEL:="INFO"}
+export LOG_TYPE=${LOG_TYPE:="stdout"}
+export RESTIC_TAG=${RESTIC_TAG:="seatable"}
+export RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:="1G"}
+export RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:=" --prune --keep-daily 6 --keep-monthly 6"}
+export RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:=" --exclude=/data/logs --exclude-if-present .exclude_from_backup"}
+export SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:="false"}
+export SEATABLE_DATABASE_HOST=${SEATABLE_DATABASE_HOST:="mariadb"}
+export SEATABLE_DATABASE_USER=${SEATABLE_DATABASE_USER:="root"}
+export SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:="false"}
+export SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:="seatable-server"}
+
+# check for valid LOG_LEVEL
 if ! [[ "$LOG_LEVEL" =~ ^(INFO|WARNING|DEBUG|ERROR)$ ]]; then
-    $LOG_LEVEL="ERROR"
-    log "ERROR" "Invalid value for LOG_LEVEL found. Allowed values are INFO, WARNING, DEBUG or ERROR."
+    $LOG_LEVEL="ERROR";
+    log "ERROR" "Invalid value for LOG_LEVEL found. Allowed values are INFO, WARNING, DEBUG or ERROR. Exiting"
     exit 1
- fi
+fi
+
+# check for mandatory input (RESTIC_REPOSITORY, RESTIC_PASSWORD)
+[ -z "$RESTIC_REPOSITORY" ] && { log "ERROR" "RESTIC_REPOSITORY is not set. Exiting."; exit 1; }
+[ -z "$RESTIC_PASSWORD" ] && { log "ERROR" "RESTIC_PASSWORD is not set. Exiting."; exit 1; }
 
 log "INFO" "Starting the restic-backup container ..."
-log "DEBUG" "LIST OF ENVIRONMENT VARIABLES"
+
+# make environment variables and path available to cron
+env >> /etc/environment
+
+# output environment variables (debug only)
+log "DEBUG" "LIST OF ENVIRONMENT VARIABLES:"
 log "DEBUG" "RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}"
 log "DEBUG" "RESTIC_PASSWORD: ${RESTIC_PASSWORD}"
 log "DEBUG" "BACKUP_CRON: ${BACKUP_CRON}"
 log "DEBUG" "CHECK_CRON: ${CHECK_CRON}"
-
-# check for empty environment variables
-if [ -z "$RESTIC_REPOSITORY" ] || [ -z "$RESTIC_PASSWORD" ] || [ -z "$BACKUP_CRON" ]; then
-    log "ERROR" "Either RESTIC_REPOSITORY, RESTIC_PASSWORD or BACKUP_CRON is empty. Please correct that."
-    exit 1
-fi
+log "DEBUG" "LOG_LEVEL: ${LOG_LEVEL}"
+log "DEBUG" "LOG_TYPE: ${LOG_TYPE}"
+log "DEBUG" "RESTIC_TAG: ${RESTIC_TAG}"
+log "DEBUG" "RESTIC_DATA_SUBSET: ${RESTIC_DATA_SUBSET}"
+log "DEBUG" "RESTIC_FORGET_ARGS: ${RESTIC_FORGET_ARGS}"
+log "DEBUG" "RESTIC_JOB_ARGS: ${RESTIC_JOB_ARGS}"
+log "DEBUG" "SEATABLE_DATABASE_DUMP: ${SEATABLE_DATABASE_DUMP}"
+log "DEBUG" "SEATABLE_DATABASE_HOST: ${SEATABLE_DATABASE_HOST}"
+log "DEBUG" "SEATABLE_DATABASE_USER: ${SEATABLE_DATABASE_USER}"
+log "DEBUG" "SEATABLE_BIGDATA_DUMP: ${SEATABLE_BIGDATA_DUMP}"
+log "DEBUG" "SEATABLE_BIGDATA_HOST: ${SEATABLE_BIGDATA_HOST}"
 
 log "DEBUG" "Check if restic repository exists, otherwise initialize."
-
 set +e
 restic snapshots ${RESTIC_INIT_ARGS} &>/dev/null
 status=$?
 set -e
-log "DEBUG" "<restic snapshot> returned the status: $status"
+log "DEBUG" "<restic snapshot> returned status: $status"
 
 if [ $status != 0 ]; then
     log "INFO" "Restic repository '${RESTIC_REPOSITORY}' does not exists. Running restic init."
@@ -41,7 +70,7 @@ if [ $status != 0 ]; then
     restic init ${RESTIC_INIT_ARGS}
     init_status=$?
     set -e
-    log "DEBUG" "<restic init> returned the status: $init_status"
+    log "DEBUG" "<restic init> returned status: $init_status"
 
     if [ $init_status != 0 ]; then
         log "ERROR" "Failed to init the repository: ${RESTIC_REPOSITORY}"
@@ -50,22 +79,23 @@ if [ $status != 0 ]; then
 fi
 
 log "INFO" "Setup backup cron job with cron expression BACKUP_CRON: ${BACKUP_CRON}"
-echo "${BACKUP_CRON} /usr/bin/flock -n /var/run/backup.lock /bin/backup >> /var/log/cron.log 2>&1" > /var/spool/cron/crontabs/root
+echo "${BACKUP_CRON} root /usr/bin/flock -n /var/run/backup.lock /bin/backup >/proc/1/fd/1 2>/proc/1/fd/2" > /etc/crontab
 
 # If CHECK_CRON is set, automatic backup checking is enabled
 if [ -n "${CHECK_CRON}" ]; then
     log "INFO" "Setup check cron job with cron expression CHECK_CRON: ${CHECK_CRON}"
-    echo "${CHECK_CRON} /usr/bin/flock -n /var/run/backup.lock /bin/check >> /var/log/cron.log 2>&1" >> /var/spool/cron/crontabs/root
+    echo "${CHECK_CRON} root /usr/bin/flock -n /var/run/backup.lock /bin/check >/proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
 else
     log "DEBUG" "NO CHECK_CRON defined"
 fi
+echo '
+# An empty line is required at the end of this file for a valid cron file.
+' >> /etc/crontab
 
-log "DEBUG" "try to create /var/log/cron.log, to make sure the file exist"
-touch /var/log/cron.log
+#log "DEBUG" "try to create /var/log/cron.log, to make sure the file exist"
+#touch /var/log/cron.log
 
-log "DEBUG" "start the cron daemon"
-cron
+log "DEBUG" "start the cron daemon now with the command: $@"
 
-log "INFO" "Container start successful. The restic repository is initialized, cron daemon runs... Ready for backup!"
-
+log "INFO" "Container started successful. The restic repository is initialized, cron daemon runs... Ready for backup!"
 exec "$@"

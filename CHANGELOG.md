@@ -4,6 +4,8 @@
 
 - LOG_LEVEL and LOG_TYPE added
 - smaller container image
+- cron rework
+- Timezone support added
 
 ## v1.1.4 (19.04.2024)
 

@@ -42,9 +42,10 @@ COPY --from=build-image /bin/rclone /bin/rclone
 COPY --from=build-image /bin/restic /bin/restic
 COPY --from=build-image /tmp/docker /usr/local/bin/docker
 
-RUN mkdir -p /local /var/spool/cron/crontabs /var/log \
+RUN mkdir -p /local /var/log/restic \
     && touch /var/log/cron.log \
-    && touch /var/log/restic-backup.log \
+    && touch /var/log/restic/backup.log \
+    && touch /var/log/restic/lastrun.log \
     && chmod +x /bin/rclone /bin/restic /usr/local/bin/docker
 
 # /data is the dir where you have to put the data to be backed up
@@ -58,4 +59,4 @@ COPY pre-default.sh /bin/pre-default.sh
 RUN chmod +x /bin/backup /bin/check /bin/entry.sh /bin/log.sh /bin/pre-default.sh
 
 ENTRYPOINT ["/bin/entry.sh"]
-CMD ["tail","-fn0","/var/log/cron.log"]
+CMD ["cron", "-f", "-L", "2"]

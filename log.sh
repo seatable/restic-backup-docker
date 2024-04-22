@@ -6,7 +6,7 @@ log() {
     local LEVEL="$1"
     local MESSAGE="$2"
     local TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-    local LOG_FILE=/var/log/restic-backup.log
+    local LOG_FILE="/var/log/restic/backup.log"
 
     # always output to stdout depending of the LEVEL of the message.
     case $LEVEL in

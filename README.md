@@ -53,7 +53,7 @@ Container supports the execution of the following custom hooks (if available at 
 ### Logs
 
 By default the container returns logs to stdout. You can get the log output of the container with `docker logs restic-backup -f`.
-If `LOG_TYPE` is set to `file`, the container also writes a log file to `/var/log/` which is mounted as volume to `/opt/restic/logs` in the host.
+If `LOG_TYPE` is set to `file`, the container also writes a log file to `/var/log/restic/backup.log` which is mounted as volume to `/opt/restic/logs` in the host.
 
 ## Customize the Container
 
@@ -61,31 +61,32 @@ The container is set up by setting environment variables and volumes.
 
 ### Environment variables
 
-| Name                         | Description                             | Example                                                               |
-| ---------------------------- | --------------------------------------- | --------------------------------------------------------------------- |
-| `RESTIC_REPOSITORY`          | Restic backup target                    | `/local` or `rest:https://backup.seatable.io`                         |
-| `RESTIC_PASSWORD`            | Encryption password                     | `topsecret`                                                           |
-| `BACKUP_CRON`                | Execution schedule for the backup       | `20 2 * * *`                                                          |
-| `CHECK_CRON`                 | Execution schedule for integrity check  | `40 3 * * 6`                                                          |
-| `LOG_LEVEL`                  | Define log level                        | `DEBUG`, `INFO`, `WARNING` or `ERROR`                                 |
-| `LOG_TYPE`                   | Define the log output type              | `stdout` or `file`                                                    |
-| `RESTIC_TAG`                 | Tag for backup                          | `seatable`                                                            |
-| `RESTIC_DATA_SUBSET`         | Restic checks only a subset of the data | `1G` or `10%` or `1/10`                                               |
-| `RESTIC_FORGET_ARGS`         | Restic Forget parameters                | ` --prune --keep-daily 6 --keep-monthly 6`                            |
-| `RESTIC_JOB_ARGS`            | Restic Job execution parameters         | `--exclude=/data/logs --exclude-if-present .exclude_from_backup`      |
-| `SEATABLE_DATABASE_DUMP`     | Enable SeaTable database dump           | `true` or `false`                                                     |
-| `SEATABLE_DATABASE_HOST`     | Name of the mariadb container           | `mariadb`                                                             |
-| `SEATABLE_DATABASE_USER`     | User for connection to mariadb          | `root`                                                                |
-| `SEATABLE_DATABASE_PASSWORD` | Password for connection to mariadb      | `topsecret`                                                           |
-| `SEATABLE_BIGDATA_DUMP`      | Enable dump of big data                 | `true` or `false`                                                     |
-| `SEATABLE_BIGDATA_HOST`      | Name of the SeaTable Server container   | `seatable-server`                                                     |
-| `HEALTHCHECK_URL`            | healthcheck.io server check url         | `https://healthcheck.io/ping/a444061a`                                |
-| `MAILX_ARGS`                 | SMTP settings for mail notification     | `-S smtp=smtp.example.com -S smtp-use-starttls -S smtp-auth-user=...` |
-| `AWS_DEFAULT_REGION`         | Required only for S3 backend            | `eu-west-1`                                                           |
-| `AWS_ACCESS_KEY_ID`          | Required only for S3 backend            |                                                                       |
-| `AWS_SECRET_ACCESS_KEY_ID`   | Required only for S3 backend            |                                                                       |
-| `B2_ACCOUNT_ID`              | Required only for backblaze backend     |                                                                       |
-| `B2_ACCOUNT_KEY`             | Required only for backblaze backend     |                                                                       |
+| Name                         | Description                           | Example                                                           | Default           |
+| ---------------------------- | ------------------------------------- | ----------------------------------------------------------------- | ----------------- |
+| `RESTIC_REPOSITORY`          | Restic backup target                  | `/local` or `rest:https://backup.seatable.io`                     | _required_        |
+| `RESTIC_PASSWORD`            | Encryption password                   | `topsecret`                                                       | _required_        |
+| `BACKUP_CRON`                | Execution schedule for the backup     | `20 2 * * *`                                                      | `20 2 * * *`      |
+| `CHECK_CRON`                 | Execution schedule integrity check    | `40 3 * * 6`                                                      | `40 3 * * 6`      |
+| `LOG_LEVEL`                  | Define log level                      | `DEBUG`, `INFO`, `WARNING` or `ERROR`.                            | `INFO`            |
+| `LOG_TYPE`                   | Define the log output type            | `stdout` or `file`                                                | `stdout`          |
+| `TZ`                         | Timezone                              | `Europe/Berlin`                                                   |                   |
+| `RESTIC_TAG`                 | Tag for backup                        | `seatable`                                                        | `seatable`        |
+| `RESTIC_DATA_SUBSET`         | Restic checks only a subset of data   | `1G` or `10%` or `1/10`                                           | `1G`              |
+| `RESTIC_FORGET_ARGS`         | Restic Forget parameters              | ` --prune --keep-daily 6 --keep-monthly 6`                        | like Example      |
+| `RESTIC_JOB_ARGS`            | Restic Job execution parameters       | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` | like Example      |
+| `SEATABLE_DATABASE_DUMP`     | Enable SeaTable database dump         | `true` or `false`                                                 | `false`           |
+| `SEATABLE_DATABASE_HOST`     | Name of the mariadb container         | `mariadb`                                                         | `mariadb`         |
+| `SEATABLE_DATABASE_USER`     | User for connection to mariadb        | `root`                                                            | `root`            |
+| `SEATABLE_DATABASE_PASSWORD` | Password for connection to mariadb    | `topsecret`                                                       |                   |
+| `SEATABLE_BIGDATA_DUMP`      | Enable dump of big data               | `true` or `false`                                                 | `false`           |
+| `SEATABLE_BIGDATA_HOST`      | Name of the SeaTable Server container | `seatable-server`                                                 | `seatable-server` |
+| `HEALTHCHECK_URL`            | healthcheck.io server check url       | `https://healthcheck.io/ping/a444061a`                            |                   |
+| `MAILX_ARGS`                 | SMTP settings for mail notification   | `-S smtp=smtp.example.com -S smtp-use-starttls -S ...`            |                   |
+| `AWS_DEFAULT_REGION`         | Required only for S3 backend          | `eu-west-1`                                                       |                   |
+| `AWS_ACCESS_KEY_ID`          | Required only for S3 backend          |                                                                   |                   |
+| `AWS_SECRET_ACCESS_KEY_ID`   | Required only for S3 backend          |                                                                   |                   |
+| `B2_ACCOUNT_ID`              | Required only for backblaze backend   |                                                                   |                   |
+| `B2_ACCOUNT_KEY`             | Required only for backblaze backend   |                                                                   |                   |
 
 ## Example docker-compose
 
@@ -104,32 +105,33 @@ services:
       - /opt/restic/restore:/restore
       - /opt/restic/cache:/root/.cache/restic
       - /opt/restic/hooks:/hooks:ro
-      - /opt/restic/logs:/var/log/
-      - /opt/restic/mount:/mnt/mount:shared # needed for "restic mount" / :shared volume to see the content of mounted fuse filesystem from host
-    devices:
-      - /dev/fuse # needed for "restic mount" / access to the host filesystem
-    cap_add:
-      - SYS_ADMIN # needed for "restic mount" / grants sysadmin capabilities
-    security_opt:
-      - apparmor:unconfined # needed for "restic mount" / disable apparmor
+      - /opt/restic/logs:/var/log/restic
+      # - /opt/restic/mount:/mnt/mount:shared # needed for "restic mount" / :shared volume to see the content of mounted fuse filesystem from host
+    # devices:
+    #  - /dev/fuse # needed for "restic mount" / access to the host filesystem
+    #cap_add:
+    #  - SYS_ADMIN # needed for "restic mount" / grants sysadmin capabilities
+    #security_opt:
+    #  - apparmor:unconfined # needed for "restic mount" / disable apparmor
     environment:
-      - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-/local}
+      - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:?Variable is not set or empty}
       - RESTIC_PASSWORD=${RESTIC_PASSWORD:?Variable is not set or empty}
-      - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME:-seatable}
-      - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *} # Start backup always at 2:15 am.
-      - CHECK_CRON=${CHECK_CRON:-45 3 \* \* 6} # Start check every sunday at 3:45am
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - LOG_TYPE=${LOG_TYPE:-stdout}
-      - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G} # Download max 1G of data from backup and check the data integrity
-      - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
-      - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
-      - SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:-true}
-      - SEATABLE_DATABASE_HOST=${SEATABLE_DATABASE_HOST:-mariadb}
-      - SEATABLE_DATABASE_USER=${SEATABLE_DATABASE_USER:-root}
-      - SEATABLE_DATABASE_PASSWORD=${SEATABLE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
-      - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true}
-      - SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:-seatable-server}
-      - HEALTHCHECK_URL=${HEALTHCHECK_URL}
+      # - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME:-seatable}
+      # - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *} # Start backup always at 2:15 am.
+      # - CHECK_CRON=${CHECK_CRON:-45 3 \* \* 6} # Start check every sunday at 3:45am
+      # - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # - LOG_TYPE=${LOG_TYPE:-stdout}
+      # - TZ=${TIME_ZONE}
+      # - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G} # Download max 1G of data from backup and check the data integrity
+      # - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
+      # - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
+      # - SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:-true}
+      # - SEATABLE_DATABASE_HOST=${SEATABLE_DATABASE_HOST:-mariadb}
+      # - SEATABLE_DATABASE_USER=${SEATABLE_DATABASE_USER:-root}
+      # - SEATABLE_DATABASE_PASSWORD=${SEATABLE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
+      # - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true}
+      # - SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:-seatable-server}
+      # - HEALTHCHECK_URL=${HEALTHCHECK_URL}
 ```
 
 ## How to restore
@@ -161,7 +163,7 @@ docker exec -it restic-backup restic restore <snapshot> --include /data/seatable
 
 `restic mount` allows to mount a snapshot to make it accessable like a local filesystem. It uses "FUSE" (Filesystem in Userspace), which requires that the FUSE kernel component from the hosts system must be made accessible to the container.
 
-This can be done either with the "privileged" flag in the docker-compose file, which is not recommended or via multiple other parameters during runtime. If you don't want to use this feature, you can easily comment or remove the corresponding lines from the yml file.
+This can be done either with the "privileged" flag in the docker-compose file, which is not recommended or via multiple other parameters during runtime. If you want to use this feature, you have to uncomment the corresponding lines from the yml file.
 
 ```bash
 # it is recommended to use screen or another terminal multiplexer for this command
