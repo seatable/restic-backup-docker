@@ -3,8 +3,6 @@
 # Checks data integrity (execute manually or by CHECK_CRON schedule)
 # - restic check
 
-set -eo pipefail
-
 source /bin/log.sh
 
 lastLogfile="/var/log/restic/lastrun.log"
@@ -15,7 +13,6 @@ healthcheck() {
     if [ -n "$HEALTHCHECK_URL" ]; then
         log "INFO" "Reporting healthcheck $suffix ..."
         [[ ${1} == "/start" ]] && m="" || m=$(cat ${lastLogfile} | tail -n 100)
-        set +e
         curl -fSsL --retry 3 -X POST \
             --user-agent "seatable-restic/1.0.0" \
             --data-raw "$m" "${HEALTHCHECK_URL}${suffix}"
@@ -23,7 +20,6 @@ healthcheck() {
             log "ERROR" "HEALTHCHECK_URL seems to be wrong..."
             exit 1
         fi
-        set -e
     else
         log "DEBUG" "No HEALTHCHECK_URL provided. Skipping healthcheck."
     fi
@@ -52,15 +48,11 @@ healthcheck /start
 
 # Do not save full check log to logfile but to check-last.log
 if [ -n "${RESTIC_DATA_SUBSET}" ]; then
-    set +e
     restic check --read-data-subset=${RESTIC_DATA_SUBSET} >> $lastLogfile 2>&1
     checkRC=$?
-    set -e
 else
-    set +e
     restic check >> ${lastLogfile} 2>&1
     checkRC=$?
-    set -e
 fi
 
 if [[ $checkRC == 0 ]]; then
@@ -77,10 +69,8 @@ log "INFO" "Finished Check after $((end-start)) seconds"
 
 if [ -n "${MAILX_ARGS}" ]; then
     log "INFO" "Executing mail command"
-    set +e
     sh -c "mail -v -S sendwait ${MAILX_ARGS} < $(cat ${lastLogfile} | tail -n 100) "
     $ms=$?
-    set -e
     if [ $ms == 0 ]; then
         log "INFO" "Mail notification successfully sent."
     else

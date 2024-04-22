@@ -4,8 +4,6 @@
 # - restic backup
 # - restic forget
 
-set -eo pipefail
-
 source /bin/log.sh
 
 lastLogfile="/var/log/restic/lastrun.log"
@@ -17,7 +15,6 @@ healthcheck() {
     if [ -n "$HEALTHCHECK_URL" ]; then
         log "INFO" "Reporting healthcheck $suffix ..."
         [[ ${1} == "/start" ]] && m="" || m=$(cat ${lastLogfile} | tail -n 100)
-        set +e
         curl -fSsL --retry 3 -X POST \
             --user-agent "seatable-restic/1.0.0" \
             --data-raw "$m" "${HEALTHCHECK_URL}${suffix}"
@@ -25,7 +22,6 @@ healthcheck() {
             log "ERROR" "HEALTHCHECK_URL seems to be wrong..."
             exit 1
         fi
-        set -e
     else
         log "DEBUG" "No HEALTHCHECK_URL provided. Skipping healthcheck."
     fi
@@ -58,10 +54,8 @@ log "DEBUG" "Healthcheck start"
 healthcheck /start
 
 log "INFO" "Start the restic backup"
-set +e
 restic backup ${backup_dir} ${RESTIC_JOB_ARGS} --tag=${RESTIC_TAG} >> $lastLogfile 2>&1
 backupRC=$?
-set -e
 if [[ $backupRC == 0 ]]; then
     log "INFO" "Backup Successful"
     healthcheck /0
@@ -73,10 +67,8 @@ fi
 
 if [[ $backupRC == 0 ]] && [ -n "${RESTIC_FORGET_ARGS}" ]; then
     log "INFO" "Forget old snapshots based on RESTIC_FORGET_ARGS = ${RESTIC_FORGET_ARGS}"
-    set +e
     restic forget ${RESTIC_FORGET_ARGS} >> $lastLogfile 2>&1
     rc=$?
-    set -e
     if [[ $rc == 0 ]]; then
         log "INFO" "Finished restic forget"
     else
@@ -91,10 +83,8 @@ log "INFO" "Finished Backup after $((end-start)) seconds"
 
 if [ -n "${MAILX_ARGS}" ]; then
     log "INFO" "Executing mail command"
-    set +e
     sh -c "mail -v -S sendwait ${MAILX_ARGS} < $(cat ${lastLogfile} | tail -n 100)"
     $ms=$?
-    set -e
     if [ $ms == 0 ]; then
         log "INFO" "Mail notification successfully sent."
     else

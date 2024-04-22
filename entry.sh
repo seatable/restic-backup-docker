@@ -4,8 +4,6 @@
 # - initializes the repository
 # - creates cronjobs for backup and checks
 
-set -eo pipefail
-
 source /bin/log.sh
 
 # set default values for all other environment variables
@@ -25,7 +23,7 @@ export SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:="seatable-server"}
 
 # check for valid LOG_LEVEL
 if ! [[ "$LOG_LEVEL" =~ ^(INFO|WARNING|DEBUG|ERROR)$ ]]; then
-    $LOG_LEVEL="ERROR";
+    LOG_LEVEL="ERROR";
     log "ERROR" "Invalid value for LOG_LEVEL found. Allowed values are INFO, WARNING, DEBUG or ERROR. Exiting"
     exit 1
 fi
@@ -58,18 +56,14 @@ log "DEBUG" "SEATABLE_BIGDATA_DUMP: ${SEATABLE_BIGDATA_DUMP}"
 log "DEBUG" "SEATABLE_BIGDATA_HOST: ${SEATABLE_BIGDATA_HOST}"
 
 log "DEBUG" "Check if restic repository exists, otherwise initialize."
-set +e
 restic snapshots ${RESTIC_INIT_ARGS} &>/dev/null
 status=$?
-set -e
 log "DEBUG" "<restic snapshot> returned status: $status"
 
 if [ $status != 0 ]; then
     log "INFO" "Restic repository '${RESTIC_REPOSITORY}' does not exists. Running restic init."
-    set +e
     restic init ${RESTIC_INIT_ARGS}
     init_status=$?
-    set -e
     log "DEBUG" "<restic init> returned status: $init_status"
 
     if [ $init_status != 0 ]; then
