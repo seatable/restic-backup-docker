@@ -96,6 +96,7 @@ services:
     image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.1.0}
     container_name: restic-backup
     restart: unless-stopped
+    init: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /opt/seatable-compose:/data/seatable-compose:ro
