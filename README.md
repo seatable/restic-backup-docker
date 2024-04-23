@@ -1,26 +1,32 @@
-# Restic Backup Docker Container (for SeaTable)
+# Restic Backup Docker Container
 
-A docker container to automate restic backups of your SeaTable Server.
+This Docker container automates restic backups and checks at regular intervals. It offers:
 
-This container runs restic backups (and checks) in regular intervals.
+- Simple setup and maintanance
+- Define backup and integrity check schedules
+- Supports all restic targets (tested with: Local filesystem, AWS, Backblaze, and rest-server)
+- Custom hook integration
+- Partial and full restore
+- Healthcheck (via https://healthchecks.io/) or email notifications
 
-- Easy setup and maintanance
-- Define a schedule for backup and integrity checks
-- Support for different targets (tested with: Local filesystem of the host, AWS, Backblaze and rest-server)
-- Partial and full restore possible
-- Healthcheck (https://healthchecks.io/) or mail notifications possible
+## SeaTable Specific Extension
 
-Use with docker compose, latest yml files at seatable docker release github repo.
+This container is essentially a wrapper for the well-established backup software [restic](https://restic.readthedocs.io/en/latest/), suitable for any use case.
+
+There's one SeaTable-specific extension: a script dumps the SeaTable database and big data before the backup starts. These actions are deactivated by default and must be enabled with these environment variables:
+
+- `SEATABLE_DATABASE_DUMP=true`
+- `SEATABLE_BIGDATA_DUMP=true`
+
+This Docker container is part of the [seatable docker release github repo](https://github.com/seatable/seatable-release), but it's essentially a restic backup container.
 
 ## How to use
 
-Everything below `/data/` folder in the container will be part of the backup.
-All restic targets are supported like rest-server, S3, backblaze and even the same filesystem of the host.
-Executed via cron inside the container.
+Everything below `/data/` in the container is part of the backup. Mount all data to be backed up as a read-only volume below `/data/`. All restic targets are supported, including rest-server, S3, Backblaze, and even the host filesystem. The backup and check schedule is executed via cron inside the container.
 
 ### Commands
 
-In general every restic command can be easily executed in the docker container like these. Check the [official restic documentation](https://restic.readthedocs.io/) for more details.
+You can easily execute any restic command in the Docker container. Refer to the [official restic documentation](https://restic.readthedocs.io/)] for more details. Here are some examples:
 
 ```bash
 docker exec -it restic-backup restic [command]
@@ -32,8 +38,9 @@ docker exec -it restic-backup restic version
 docker exec -it restic-backup restic stats
 ```
 
-In addition there are two easy to use command for backup and check. These are executed according the CRON schedule.
-To execute a backup or the check the consistency manually, independent of the CRON, just run:
+Additionally, there are two simple commands for backup and checking consistency. These commands are also executed according to the CRON schedule.
+
+To manually perform a backup or check consistency, independent of the CRON, run:
 
 ```bash
 docker exec -it restic-backup backup
@@ -42,7 +49,7 @@ docker exec -it restic-backup check
 
 ### Hooks
 
-Container supports the execution of the following custom hooks (if available at the container).
+The Container supports the execution of the following custom hooks (if available at the container). Hooks are skipped if no scripts are found.
 
 - /hooks/pre-backup.sh
 - /hooks/post-backup.sh
@@ -91,7 +98,7 @@ The container is set up by setting environment variables and volumes.
 
 ### Mail notification
 
-Mail notification is optional. If specified, the content of /var/log/restic/lastrun.log is sent via mail after each backup and data integrity check using an external SMTP. To have maximum flexibility, you have to provide a msmtp configuration file with the mail/smtp parameters on your own. Have a look at the [msmtp manpage](https://wiki.debian.org/msmtp) for further information.
+Mail notification is optional. If specified, the content of `/var/log/restic/lastrun.log` is sent via mail after each backup and data integrity check using an external SMTP. To have maximum flexibility, you have to provide a msmtp configuration file with the mail/smtp parameters on your own. Have a look at the [msmtp manpage](https://wiki.debian.org/msmtp) for further information.
 
 Here is an example of `MSMTP_ARGS`, to specify the recipient of the notification.
 
@@ -122,11 +129,13 @@ account default: brevo
 
 ## Example docker-compose
 
+Get the latest version of the container from <https://hub.docker.com/repository/docker/seatable/restic-backup>.
+
 ```yaml
 ---
 services:
   restic-backup:
-    image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.1.0}
+    image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.2.5}
     container_name: restic-backup
     restart: unless-stopped
     init: true
@@ -137,8 +146,8 @@ services:
       - /opt/restic/local:/local
       - /opt/restic/restore:/restore
       - /opt/restic/cache:/root/.cache/restic
-      - /opt/restic/hooks:/hooks:ro
-      - /opt/restic/logs:/var/log/restic
+      #- /opt/restic/hooks:/hooks:ro
+      #- /opt/restic/logs:/var/log/restic
       #- /opt/restic/msmtprc.conf:/root/.msmtprc:ro
     environment:
       - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:?Variable is not set or empty}
@@ -167,15 +176,15 @@ services:
 
 ### Restore to host server
 
-Restore inside the docker container to the /restore folder. This is mounted to the host system and the files can be seen there.
-Use the following command to restore files from the latest snapshot.
+Restore files inside the Docker container to the `/restore` folder, which is mounted to the host system.
+
+To restore files from the latest snapshot, use the following command:
 
 ```bash
 docker exec -it restic-backup restic restore latest --target /restore
 ```
 
-If you want to restore only a subset and from an old snapshot, use this command:
-All commands from the [official restic documentation](https://restic.readthedocs.io/) are supported.
+If you want to restore only a subset from an older snapshot, use this command:
 
 ```bash
 # get snapshot ids
@@ -188,6 +197,10 @@ docker exec -it restic-backup restic ls <snapshot>
 docker exec -it restic-backup restic restore <snapshot> --include /data/seatable-server/seatable/conf/ --target /restore
 ```
 
+All commands from the [official restic documentation](https://restic.readthedocs.io/) are supported.
+
 ### Mount
 
-`restic mount` allows to mount a snapshot to make it accessable like a local filesystem. It uses "FUSE" (Filesystem in Userspace), which requires that the FUSE kernel component from the hosts system must be made accessible to the container. FUSE in a docker setup creates a lot of problems. Therefore we removed everything that is connected with mount. Please don't use it.
+`restic mount` allows you to mount a snapshot to make it accessable like a local filesystem.
+
+However, using "FUSE" (Filesystem in Userspace) in a Docker setup can create various problems. Therefore, we've removed everything related to mounting from this container. Please avoid using it.
