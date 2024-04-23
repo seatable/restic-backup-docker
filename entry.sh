@@ -34,26 +34,32 @@ log "DEBUG" "RESTIC_TAG: ${RESTIC_TAG}"
 log "DEBUG" "RESTIC_DATA_SUBSET: ${RESTIC_DATA_SUBSET}"
 log "DEBUG" "RESTIC_FORGET_ARGS: ${RESTIC_FORGET_ARGS}"
 log "DEBUG" "RESTIC_JOB_ARGS: ${RESTIC_JOB_ARGS}"
+log "DEBUG" "RESTIC_SKIP_INIT: ${RESTIC_SKIP_INIT}"
 log "DEBUG" "SEATABLE_DATABASE_DUMP: ${SEATABLE_DATABASE_DUMP}"
 log "DEBUG" "SEATABLE_DATABASE_HOST: ${SEATABLE_DATABASE_HOST}"
 log "DEBUG" "SEATABLE_DATABASE_USER: ${SEATABLE_DATABASE_USER}"
 log "DEBUG" "SEATABLE_BIGDATA_DUMP: ${SEATABLE_BIGDATA_DUMP}"
 log "DEBUG" "SEATABLE_BIGDATA_HOST: ${SEATABLE_BIGDATA_HOST}"
+log "DEBUG" "MSMTP_ARGS: ${MSMTP_ARGS}"
 
-log "DEBUG" "Check if restic repository exists, otherwise initialize."
-restic snapshots ${RESTIC_INIT_ARGS} &>/dev/null
-status=$?
-log "DEBUG" "<restic snapshot> returned status: $status"
+if [ "${RESTIC_SKIP_INIT}" == true ]; then
+    log "INFO" "Skip restic init"
+else
+    log "DEBUG" "Check if restic repository exists, otherwise initialize."
+    restic snapshots ${RESTIC_INIT_ARGS} &>/dev/null
+    status=$?
+    log "DEBUG" "<restic snapshot> returned status: $status"
 
-if [ $status != 0 ]; then
-    log "INFO" "Restic repository '${RESTIC_REPOSITORY}' does not exists. Running restic init."
-    restic init ${RESTIC_INIT_ARGS}
-    init_status=$?
-    log "DEBUG" "<restic init> returned status: $init_status"
+    if [ $status != 0 ]; then
+        log "INFO" "Restic repository '${RESTIC_REPOSITORY}' does not exists. Running restic init."
+        restic init ${RESTIC_INIT_ARGS}
+        init_status=$?
+        log "DEBUG" "<restic init> returned status: $init_status"
 
-    if [ $init_status != 0 ]; then
-        log "ERROR" "Failed to init the repository: ${RESTIC_REPOSITORY}"
-        exit 1
+        if [ $init_status != 0 ]; then
+            log "ERROR" "Failed to init the repository: ${RESTIC_REPOSITORY}"
+            exit 1
+        fi
     fi
 fi
 

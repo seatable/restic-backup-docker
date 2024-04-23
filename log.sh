@@ -9,8 +9,9 @@ export LOG_LEVEL=${LOG_LEVEL:="INFO"}
 export LOG_TYPE=${LOG_TYPE:="stdout"}
 export RESTIC_TAG=${RESTIC_TAG:="seatable"}
 export RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:="1G"}
-export RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:=" --prune --keep-daily 6 --keep-monthly 6"}
+export RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:=" --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6"}
 export RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:=" --exclude=/data/logs --exclude-if-present .exclude_from_backup"}
+export RESTIC_SKIP_INIT=${RESTIC_SKIP_INIT:="false"}
 export SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:="false"}
 export SEATABLE_DATABASE_HOST=${SEATABLE_DATABASE_HOST:="mariadb"}
 export SEATABLE_DATABASE_USER=${SEATABLE_DATABASE_USER:="root"}

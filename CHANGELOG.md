@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.5 (23.04.2024)
+
+- mstmp instead of mailx
+- new environment variable: RESTIC_SKIP_INIT
+
 ## v1.2.4 (22.04.2024)
 
 - default values for manual execution

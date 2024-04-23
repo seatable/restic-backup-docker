@@ -14,7 +14,7 @@ healthcheck() {
     suffix=$1
     if [ -n "$HEALTHCHECK_URL" ]; then
         log "INFO" "Reporting healthcheck $suffix ..."
-        [[ ${1} == "/start" ]] && m="" || m=$(cat ${lastLogfile} | tail -n 100)
+        [[ ${1} == "/start" ]] && m="" || m=$(cat ${lastLogfile} | tail -n 300)
         curl -fSsL --retry 3 -X POST \
             --user-agent "seatable-restic/1.0.0" \
             --data-raw "$m" "${HEALTHCHECK_URL}${suffix}"
@@ -82,17 +82,17 @@ end=`date +%s`
 log "INFO" "Finished Backup after $((end-start)) seconds"
 echo "Finished Backup at $(date +"%Y-%m-%d %H:%M:%S") after $((end-start)) seconds" >> $lastLogfile
 
-if [ -n "${MAILX_ARGS}" ]; then
+if [ -n "${MSMTP_ARGS}" ]; then
     log "INFO" "Executing mail command"
-    sh -c "mail -v -S sendwait ${MAILX_ARGS} < $(cat ${lastLogfile} | tail -n 100)"
-    $ms=$?
-    if [ $ms == 0 ]; then
+    echo -e "Subject: Restic-Backup \n\n$(cat ${lastLogfile})" | msmtp ${MSMTP_ARGS}
+    ms=$?
+    if [[ $ms == 0 ]]; then
         log "INFO" "Mail notification successfully sent."
     else
         log "ERROR" "Sending mail notification FAILED."
     fi
 else
-    log "DEBUG" "MAILX_ARGS not defined. Therefore no mail notification"
+    log "DEBUG" "MSMTP_ARGS not defined. Therefore no mail notification."
 fi
 
 # /hooks/post-backup.sh
@@ -102,3 +102,4 @@ if [ -f "/hooks/post-backup.sh" ]; then
 else
     log "DEBUG" "Post-backup script not found"
 fi
+

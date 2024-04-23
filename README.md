@@ -7,8 +7,8 @@ This container runs restic backups (and checks) in regular intervals.
 - Easy setup and maintanance
 - Define a schedule for backup and integrity checks
 - Support for different targets (tested with: Local filesystem of the host, AWS, Backblaze and rest-server)
-- Healthcheck (https://healthchecks.io/) or mail notifications possible
 - Partial and full restore possible
+- Healthcheck (https://healthchecks.io/) or mail notifications possible
 
 Use with docker compose, latest yml files at seatable docker release github repo.
 
@@ -52,6 +52,7 @@ Container supports the execution of the following custom hooks (if available at 
 ### Logs
 
 By default the container returns logs to stdout. You can get the log output of the container with `docker logs restic-backup -f`.
+
 If `LOG_TYPE` is set to `file`, the container also writes a log file to `/var/log/restic/backup.log` which is mounted as volume to `/opt/restic/logs` in the host.
 
 ## Customize the Container
@@ -73,6 +74,7 @@ The container is set up by setting environment variables and volumes.
 | `RESTIC_DATA_SUBSET`         | Restic checks only a subset of data   | `1G` or `10%` or `1/10`                                           | `1G`              |
 | `RESTIC_FORGET_ARGS`         | Restic Forget parameters              | ` --prune --keep-daily 6 --keep-monthly 6`                        | like Example      |
 | `RESTIC_JOB_ARGS`            | Restic Job execution parameters       | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` | like Example      |
+| `RESTIC_SKIP_INIT`           | Skip restic initialization            | `true` or `false`                                                 | `false`           |
 | `SEATABLE_DATABASE_DUMP`     | Enable SeaTable database dump         | `true` or `false`                                                 | `false`           |
 | `SEATABLE_DATABASE_HOST`     | Name of the mariadb container         | `mariadb`                                                         | `mariadb`         |
 | `SEATABLE_DATABASE_USER`     | User for connection to mariadb        | `root`                                                            | `root`            |
@@ -80,12 +82,43 @@ The container is set up by setting environment variables and volumes.
 | `SEATABLE_BIGDATA_DUMP`      | Enable dump of big data               | `true` or `false`                                                 | `false`           |
 | `SEATABLE_BIGDATA_HOST`      | Name of the SeaTable Server container | `seatable-server`                                                 | `seatable-server` |
 | `HEALTHCHECK_URL`            | healthcheck.io server check url       | `https://healthcheck.io/ping/a444061a`                            |                   |
-| `MAILX_ARGS`                 | SMTP settings for mail notification   | `-S smtp=smtp.example.com -S smtp-use-starttls -S ...`            |                   |
+| `MSMTP_ARGS`                 | SMTP settings for mail notification   | `--host=x --port=587 ... cdb@seatable.io`                         |                   |
 | `AWS_DEFAULT_REGION`         | Required only for S3 backend          | `eu-west-1`                                                       |                   |
 | `AWS_ACCESS_KEY_ID`          | Required only for S3 backend          |                                                                   |                   |
 | `AWS_SECRET_ACCESS_KEY_ID`   | Required only for S3 backend          |                                                                   |                   |
 | `B2_ACCOUNT_ID`              | Required only for backblaze backend   |                                                                   |                   |
 | `B2_ACCOUNT_KEY`             | Required only for backblaze backend   |                                                                   |                   |
+
+### Mail notification
+
+Mail notification is optional. If specified, the content of /var/log/restic/lastrun.log is sent via mail after each backup and data integrity check using an external SMTP. To have maximum flexibility, you have to provide a msmtp configuration file with the mail/smtp parameters on your own. Have a look at the [msmtp manpage](https://wiki.debian.org/msmtp) for further information.
+
+Here is an example of `MSMTP_ARGS`, to specify the recipient of the notification.
+
+```bash
+# example of MSMTP_ARGS
+MSMTP_ARGS="recipient@example.com"
+MSMTP_ARGS="-a default recipient@example.com"
+```
+
+Here is the example of `/opt/restic/msmtprc.conf` to configure your external SMTP account.
+
+```bash
+defaults
+auth           on
+tls            on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile        /var/log/restic/msmtp.log
+
+account        brevo
+host           smtp-relay.brevo.com
+port           587
+from           noreply@seatable.io
+user           your-username
+password       your-password
+
+account default: brevo
+```
 
 ## Example docker-compose
 
@@ -106,6 +139,7 @@ services:
       - /opt/restic/cache:/root/.cache/restic
       - /opt/restic/hooks:/hooks:ro
       - /opt/restic/logs:/var/log/restic
+      #- /opt/restic/msmtprc.conf:/root/.msmtprc:ro
     environment:
       - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:?Variable is not set or empty}
       - RESTIC_PASSWORD=${RESTIC_PASSWORD:?Variable is not set or empty}
@@ -118,6 +152,7 @@ services:
       # - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G} # Download max 1G of data from backup and check the data integrity
       # - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
       # - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
+      # - RESTIC_SKIP_INIT=${RESTIC_SKIP_INIT}
       # - SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:-true}
       # - SEATABLE_DATABASE_HOST=${SEATABLE_DATABASE_HOST:-mariadb}
       # - SEATABLE_DATABASE_USER=${SEATABLE_DATABASE_USER:-root}
@@ -125,6 +160,7 @@ services:
       # - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true}
       # - SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:-seatable-server}
       # - HEALTHCHECK_URL=${HEALTHCHECK_URL}
+      # - MSMTP_ARGS=${MSMTP_ARGS}
 ```
 
 ## How to restore

@@ -31,7 +31,7 @@ RUN \
         curl \
         openssl \
         mailutils \
-        bsd-mailx \
+        msmtp \
         tree \
         fuse \
         cron \
