@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.6 (24.06.2024)
+
+- add jq to the Dockerfile
+
 ## v1.2.5 (23.04.2024)
 
 - mstmp instead of mailx

@@ -36,6 +36,7 @@ RUN \
         fuse \
         cron \
         ca-certificates \
+        jq \
     && apt-get clean
 
 # get rclone and restic from build-image
