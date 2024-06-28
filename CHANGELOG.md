@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.7 (28.06.2024)
+
+- absolute paths in pre-default.sh
+
 ## v1.2.6 (24.06.2024)
 
 - add jq to the Dockerfile
