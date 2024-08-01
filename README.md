@@ -9,14 +9,15 @@ This Docker container automates restic backups and checks at regular intervals. 
 - Partial and full restore
 - Healthcheck (via https://healthchecks.io/) or email notifications
 
-## SeaTable Specific Extension
+## SeaTable and Seafile Specific Extension
 
 This container is essentially a wrapper for the well-established backup software [restic](https://restic.readthedocs.io/en/latest/), suitable for any use case.
 
-There's one SeaTable-specific extension: a script dumps the SeaTable database and big data before the backup starts. These actions are deactivated by default and must be enabled with these environment variables:
+There are SeaTable- and Seafile-specific extensions: a script dumps the Seafile/SeaTable database and SeaTable big data before the backup starts. These actions are deactivated by default and must be enabled with these environment variables:
 
 - `SEATABLE_DATABASE_DUMP=true`
 - `SEATABLE_BIGDATA_DUMP=true`
+- `SEAFILE_DATABASE_DUMP=true`
 
 This Docker container is part of the [seatable docker release github repo](https://github.com/seatable/seatable-release), but it's essentially a restic backup container.
 
@@ -88,6 +89,10 @@ The container is set up by setting environment variables and volumes.
 | `SEATABLE_DATABASE_PASSWORD` | Password for connection to mariadb    | `topsecret`                                                       |                   |
 | `SEATABLE_BIGDATA_DUMP`      | Enable dump of big data               | `true` or `false`                                                 | `false`           |
 | `SEATABLE_BIGDATA_HOST`      | Name of the SeaTable Server container | `seatable-server`                                                 | `seatable-server` |
+| `SEAFILE_DATABASE_DUMP`      | Enable Seafile database dump          | `true` or `false`                                                 | `false`           |
+| `SEAFILE_DATABASE_HOST`      | Name of the mariadb container         | `mariadb`                                                         | `mariadb`         |
+| `SEAFILE_DATABASE_USER`      | User for connection to mariadb        | `root`                                                            | `root`            |
+| `SEAFILE_DATABASE_PASSWORD`  | Password for connection to mariadb    | `topsecret`                                                       |                   |
 | `HEALTHCHECK_URL`            | healthcheck.io server check url       | `https://healthcheck.io/ping/a444061a`                            |                   |
 | `MSMTP_ARGS`                 | SMTP settings for mail notification   | `--host=x --port=587 ... cdb@seatable.io`                         |                   |
 | `AWS_DEFAULT_REGION`         | Required only for S3 backend          | `eu-west-1`                                                       |                   |
@@ -135,7 +140,7 @@ Get the latest version of the container from <https://hub.docker.com/repository/
 ---
 services:
   restic-backup:
-    image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.2.5}
+    image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.2.8}
     container_name: restic-backup
     restart: unless-stopped
     init: true
@@ -168,6 +173,10 @@ services:
       # - SEATABLE_DATABASE_PASSWORD=${SEATABLE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
       # - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true}
       # - SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:-seatable-server}
+      # - SEAFILE_DATABASE_DUMP=${SEAFILE_DATABASE_DUMP:-true}
+      # - SEAFILE_DATABASE_HOST=${SEAFILE_DATABASE_HOST:-mariadb}
+      # - SEAFILE_DATABASE_USER=${SEAFILE_DATABASE_USER:-root}
+      # - SEAFILE_DATABASE_PASSWORD=${SEAFILE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
       # - HEALTHCHECK_URL=${HEALTHCHECK_URL}
       # - MSMTP_ARGS=${MSMTP_ARGS}
 ```

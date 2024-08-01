@@ -8,6 +8,17 @@ set -eo pipefail
 
 source /bin/log.sh
 
+if [ "${SEAFILE_DATABASE_DUMP}" == true ]; then
+    log "INFO" "Dump the database"
+    mkdir -p /data/seafile-dumps
+    /usr/local/bin/docker exec ${SEAFILE_DATABASE_HOST} mysqldump -u${SEAFILE_DATABASE_USER} -p${SEAFILE_DATABASE_PASSWORD} --opt ccnet_db > /data/seafile-dumps/ccnet.dump
+    /usr/local/bin/docker exec ${SEAFILE_DATABASE_HOST} mysqldump -u${SEAFILE_DATABASE_USER} -p${SEAFILE_DATABASE_PASSWORD} --opt seafile_db > /data/seafile-dumps/seafile.dump
+    /usr/local/bin/docker exec ${SEAFILE_DATABASE_HOST} mysqldump -u${SEAFILE_DATABASE_USER} -p${SEAFILE_DATABASE_PASSWORD} --opt seahub_db > /data/seafile-dumps/seahub.dump
+    log "INFO" "Dump finished"
+else
+    log "DEBUG" "Skip database dump"
+fi
+
 if [ "${SEATABLE_DATABASE_DUMP}" == true ]; then
     log "INFO" "Dump the database"
     mkdir -p /data/seatable-dumps

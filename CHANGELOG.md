@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.8 (01.08.2024)
+
+- add possibility to dump Seafile database
+
 ## 1.2.7 (28.06.2024)
 
 - absolute paths in pre-default.sh
