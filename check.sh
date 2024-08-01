@@ -5,6 +5,7 @@
 
 source /bin/log.sh
 
+mkdir -p /var/log/restic
 lastLogfile="/var/log/restic/lastrun.log"
 start=`date +%s`
 

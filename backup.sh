@@ -6,6 +6,7 @@
 
 source /bin/log.sh
 
+mkdir -p /var/log/restic
 lastLogfile="/var/log/restic/lastrun.log"
 backup_dir="/data"
 start=`date +%s`

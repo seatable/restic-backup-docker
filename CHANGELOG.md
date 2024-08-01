@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.2.8 (01.08.2024)
+## 1.2.9 (01.08.2024)
 
 - add possibility to dump Seafile database
+- creating log directory on every start
 
 ## 1.2.7 (28.06.2024)
 
