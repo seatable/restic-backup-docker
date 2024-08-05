@@ -12,14 +12,12 @@ export RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:="1G"}
 export RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:=" --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6"}
 export RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:=" --exclude=/data/logs --exclude-if-present .exclude_from_backup"}
 export RESTIC_SKIP_INIT=${RESTIC_SKIP_INIT:="false"}
-export SEATABLE_DATABASE_DUMP=${SEATABLE_DATABASE_DUMP:="false"}
-export SEATABLE_DATABASE_HOST=${SEATABLE_DATABASE_HOST:="mariadb"}
-export SEATABLE_DATABASE_USER=${SEATABLE_DATABASE_USER:="root"}
+export DATABASE_DUMP=${DATABASE_DUMP:="false"}
+export DATABASE_HOST=${DATABASE_HOST:="mariadb"}
+export DATABASE_USER=${DATABASE_USER:="root"}
+export DATABASE_LIST=${DATABASE_LIST:=""}
 export SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:="false"}
 export SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:="seatable-server"}
-export SEAFILE_DATABASE_DUMP=${SEAFILE_DATABASE_DUMP:="false"}
-export SEAFILE_DATABASE_HOST=${SEAFILE_DATABASE_HOST:="mariadb"}
-export SEAFILE_DATABASE_USER=${SEAFILE_DATABASE_USER:="root"}
 
 log() {
     local LEVEL="$1"

@@ -1,35 +1,33 @@
 #!/usr/bin/env bash
 #
-# SeaTable specific pre-backup script.
-# - It dumps the mariadb database
-# - It forces backup of big data
+# General pre-backup script for mysql/mariadb databases
+# SeaTable specific pre-backup script to backup big data
 
 set -eo pipefail
 
 source /bin/log.sh
 
-if [ "${SEAFILE_DATABASE_DUMP}" == true ]; then
-    log "INFO" "Dump the database"
-    mkdir -p /data/seafile-dumps
-    /usr/local/bin/docker exec ${SEAFILE_DATABASE_HOST} mysqldump -u${SEAFILE_DATABASE_USER} -p${SEAFILE_DATABASE_PASSWORD} --opt ccnet_db > /data/seafile-dumps/ccnet.dump
-    /usr/local/bin/docker exec ${SEAFILE_DATABASE_HOST} mysqldump -u${SEAFILE_DATABASE_USER} -p${SEAFILE_DATABASE_PASSWORD} --opt seafile_db > /data/seafile-dumps/seafile.dump
-    /usr/local/bin/docker exec ${SEAFILE_DATABASE_HOST} mysqldump -u${SEAFILE_DATABASE_USER} -p${SEAFILE_DATABASE_PASSWORD} --opt seahub_db > /data/seafile-dumps/seahub.dump
+# DATABASE DUMP
+if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; then
+    log "INFO" "Dump the database (mariadb or mysql)"
+    mkdir -p /data/database-dumps
+    if [ -n "${DATABASE_LIST}" ]; then
+        log "DEBUG" "I will split this DATABASE_LIST ${DATABASE_LIST} and export all separately"
+        IFS=',' read -r -a DATABASE_ARRAY <<< "${DATABASE_LIST}"
+        for DATABASE in "${DATABASE_ARRAY[@]}"; do
+            log "DEBUG" "Let's dump the database ${DATABASE}"
+            /usr/local/bin/docker exec ${DATABASE_HOST} mysqldump -u${DATABASE_USER} -p${DATABASE_PASSWORD} --opt ${DATABASE} > /data/database-dumps/${DATABASE}.dump
+        done
+    else
+        log "DEBUG" "Let's dump all databases"
+        /usr/local/bin/docker exec ${DATABASE_HOST} mysqldump -u${DATABASE_USER} -p${DATABASE_PASSWORD} --all-databases > /data/database-dumps/all.dump
+    fi
     log "INFO" "Dump finished"
 else
     log "DEBUG" "Skip database dump"
 fi
 
-if [ "${SEATABLE_DATABASE_DUMP}" == true ]; then
-    log "INFO" "Dump the database"
-    mkdir -p /data/seatable-dumps
-    /usr/local/bin/docker exec ${SEATABLE_DATABASE_HOST} mysqldump -u${SEATABLE_DATABASE_USER} -p${SEATABLE_DATABASE_PASSWORD} --opt ccnet_db > /data/seatable-dumps/ccnet.dump
-    /usr/local/bin/docker exec ${SEATABLE_DATABASE_HOST} mysqldump -u${SEATABLE_DATABASE_USER} -p${SEATABLE_DATABASE_PASSWORD} --opt seafile_db > /data/seatable-dumps/seafile.dump
-    /usr/local/bin/docker exec ${SEATABLE_DATABASE_HOST} mysqldump -u${SEATABLE_DATABASE_USER} -p${SEATABLE_DATABASE_PASSWORD} --opt dtable_db > /data/seatable-dumps/dtable.dump
-    log "INFO" "Dump finished"
-else
-    log "DEBUG" "Skip database dump"
-fi
-
+# BIG DATA DUMP
 if [ "${SEATABLE_BIGDATA_DUMP}" == true ]; then
     log "INFO" "Dump big data"
     /usr/local/bin/docker exec ${SEATABLE_BIGDATA_HOST} /opt/seatable/scripts/seatable.sh backup-all

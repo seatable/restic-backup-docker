@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0 (05.08.2024)
+
+- harmonize to dump any mysql/mariadb database
+
 ## 1.2.9 (01.08.2024)
 
 - add possibility to dump Seafile database
