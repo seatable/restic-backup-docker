@@ -24,6 +24,9 @@ This Docker container is part of the [seatable docker release github repo](https
 
 Everything below `/data/` in the container is part of the backup. Mount all data to be backed up as a read-only volume below `/data/`. All restic targets are supported, including rest-server, S3, Backblaze, and even the host filesystem. The backup and check schedule is executed via cron inside the container.
 
+**Important**: Avoid mounting something directly to `/data/` directory as read-only. Otherwise database dumps will not work because it creates a folder `/data/database-dumps`.
+Instead mount everything in subdirectory like `/data/seatable-compose`, `/data/seafile` or `/data/anything-else`.
+
 ### Commands
 
 You can easily execute any restic command in the Docker container. Refer to the [official restic documentation](https://restic.readthedocs.io/)] for more details. Here are some examples:
@@ -144,7 +147,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /opt/seatable-compose:/data/seatable-compose:ro
-      - /opt/seatable-server/seatable:/data/seatable-server/seatable:ro
+      - /opt/seatable-server/seatable:/data/seatable-server:ro
       - /opt/restic/local:/local
       - /opt/restic/restore:/restore
       - /opt/restic/cache:/root/.cache/restic
