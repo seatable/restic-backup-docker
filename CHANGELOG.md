@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1 (12.09.2024)
+
+- remove default values for RESTIC_FORGET_ARGS and RESTIC_JOB_ARGS
+- add HEALTHCHECK_URL to debug output
+- improved README.md for parallel backups
+
 ## 1.3.0 (05.08.2024)
 
 - harmonize to dump any mysql/mariadb database

@@ -9,8 +9,8 @@ export LOG_LEVEL=${LOG_LEVEL:="INFO"}
 export LOG_TYPE=${LOG_TYPE:="stdout"}
 export RESTIC_TAG=${RESTIC_TAG:="seatable"}
 export RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:="1G"}
-export RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:=" --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6"}
-export RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:=" --exclude=/data/logs --exclude-if-present .exclude_from_backup"}
+export RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:=""}
+export RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:=""}
 export RESTIC_SKIP_INIT=${RESTIC_SKIP_INIT:="false"}
 export DATABASE_DUMP=${DATABASE_DUMP:="false"}
 export DATABASE_HOST=${DATABASE_HOST:="mariadb"}
@@ -18,6 +18,7 @@ export DATABASE_USER=${DATABASE_USER:="root"}
 export DATABASE_LIST=${DATABASE_LIST:=""}
 export SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:="false"}
 export SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:="seatable-server"}
+export HEALTHCHECK_URL=${HEALTHCHECK_URL:=""}
 
 log() {
     local LEVEL="$1"

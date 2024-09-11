@@ -18,7 +18,7 @@ There is one SeaTable-specific extensions: a script dumps the SeaTable big data 
 
 - `SEATABLE_BIGDATA_DUMP=true`
 
-This Docker container is part of the [seatable docker release github repo](https://github.com/seatable/seatable-release), but it's essentially a restic backup container capable of backup up everything plus a mysql/mariadb dump.
+This Docker container is part of the [seatable docker release github repo](https://github.com/seatable/seatable-release), but it's essentially a restic backup container capable of backup up everything **plus a mysql/mariadb dump**.
 
 ## How to use
 
@@ -82,8 +82,8 @@ The container is set up by setting environment variables and volumes.
 | `TZ`                       | Timezone                                        | `Europe/Berlin`                                                   |                   |
 | `RESTIC_TAG`               | Tag for backup                                  | `seatable`                                                        | `seatable`        |
 | `RESTIC_DATA_SUBSET`       | Restic checks only a subset of data             | `1G` or `10%` or `1/10`                                           | `1G`              |
-| `RESTIC_FORGET_ARGS`       | Restic Forget parameters                        | ` --prune --keep-daily 6 --keep-monthly 6`                        | like Example      |
-| `RESTIC_JOB_ARGS`          | Restic Job execution parameters                 | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` | like Example      |
+| `RESTIC_FORGET_ARGS`       | Restic Forget parameters                        | ` --prune --keep-daily 6 --keep-monthly 6`                        |                   |
+| `RESTIC_JOB_ARGS`          | Restic Job execution parameters                 | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` |                   |
 | `RESTIC_SKIP_INIT`         | Skip restic initialization                      | `true` or `false`                                                 | `false`           |
 | `SEATABLE_DATABASE_DUMP`   | Enable mysql/mariadb database dump (DEPRECATED) | `true` or `false`                                                 | `false`           |
 | `DATABASE_DUMP`            | Enable mysql/mariadb database dump              | `true` or `false`                                                 | `false`           |
@@ -140,7 +140,7 @@ Get the latest version of the container from <https://hub.docker.com/repository/
 ---
 services:
   restic-backup:
-    image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.2.8}
+    image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.4.0}
     container_name: restic-backup
     restart: unless-stopped
     init: true
@@ -210,3 +210,7 @@ All commands from the [official restic documentation](https://restic.readthedocs
 `restic mount` allows you to mount a snapshot to make it accessable like a local filesystem.
 
 However, using "FUSE" (Filesystem in Userspace) in a Docker setup can create various problems. Therefore, we've removed everything related to mounting from this container. Please avoid using it.
+
+## Two backup targets
+
+Sometimes you might want to backup to two different repositories. In this case it is no problem to run to backup containers in parallel. The volume configuration can be the same, but it is advised that you run the backups to different times. Therefore choose different values for `BACKUP_CRON` and `CHECK_CRON`.
