@@ -97,7 +97,7 @@ The container is set up by setting environment variables and volumes.
 | `MSMTP_ARGS`               | SMTP settings for mail notification             | `--host=x --port=587 ... cdb@seatable.io`                         |                   |
 | `AWS_DEFAULT_REGION`       | Required only for S3 backend                    | `eu-west-1`                                                       |                   |
 | `AWS_ACCESS_KEY_ID`        | Required only for S3 backend                    |                                                                   |                   |
-| `AWS_SECRET_ACCESS_KEY_ID` | Required only for S3 backend                    |                                                                   |                   |
+| `AWS_SECRET_ACCESS_KEY`    | Required only for S3 backend                    |                                                                   |                   |
 | `B2_ACCOUNT_ID`            | Required only for backblaze backend             |                                                                   |                   |
 | `B2_ACCOUNT_KEY`           | Required only for backblaze backend             |                                                                   |                   |
 
