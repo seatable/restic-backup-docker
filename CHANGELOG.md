@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2 (16.09.2024)
+
+- fixing typo in entry.sh
+
 ## 1.3.1 (12.09.2024)
 
 - remove default values for RESTIC_FORGET_ARGS and RESTIC_JOB_ARGS
