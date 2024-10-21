@@ -214,3 +214,42 @@ However, using "FUSE" (Filesystem in Userspace) in a Docker setup can create var
 ## Two backup targets
 
 Sometimes you might want to backup to two different repositories. In this case it is no problem to run to backup containers in parallel. The volume configuration can be the same, but it is advised that you run the backups to different times. Therefore choose different values for `BACKUP_CRON` and `CHECK_CRON`.
+
+## Using rclone
+
+Restic supports a variety of backup targets via `rclone`. While `rclone` is pre-installed in the container, you need to mount your `rclone.conf` file to the correct path for proper functionality.
+To mount your `rclone.conf` file, add the following to your `custom-restic.yml`:
+
+```
+services:
+  restic-backup:
+    # ... other configurations ...
+    volumes:
+      # ... other volumes ...
+      - ./rclone.conf:/root/.config/rclone/rclone.conf:ro
+```
+
+### Creating an rclone.conf file
+
+The simplest way to generate your `rclone.conf` file is by using the rclone configuration management command line. Follow these steps:
+
+```
+docker run -it --entrypoint=/bin/bash seatable/restic-backup:1.3.2 -i
+rclone config
+# Follow the prompts to create your rclone configuration.
+# Once completed, display the contents of the configuration file:
+cat /root/.config/rclone/rclone.conf
+# copy the content of this configuration file to the host and mount it to the container.
+```
+
+For more detailed information on configuring rclone, refer to the [official Restic documentation](https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#other-services-via-rclone).
+
+### Use rclone as target
+
+The general backend specification format is `rclone:<remote>:<path>`, the `<remote>:<path>` component will be directly passed to rclone.
+
+Your .env might look like this:
+
+```
+RESTIC_REPOSITORY="rclone:dropbox-restic:/Backup Folder"
+```
