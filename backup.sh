@@ -31,11 +31,20 @@ healthcheck() {
 # always execute /bin/pre-default.sh
 log "DEBUG" "Starting pre-default.sh"
 /bin/pre-default.sh
+if [ $? -ne 0 ]; then
+    log "ERROR" "pre-default.sh was not successful."
+    exit 1
+fi
 
 # /hooks/pre-backup.sh
 if [ -f "/hooks/pre-backup.sh" ]; then
     log "INFO" "Starting pre-backup script"
     /hooks/pre-backup.sh
+    if [ $? -ne 0 ]; then
+        log "ERROR" "pre-backup.sh was not successful."
+        exit 1
+    fi
+fi
 else
     log "DEBUG" "Pre-backup script not found"
 fi
@@ -100,6 +109,10 @@ fi
 if [ -f "/hooks/post-backup.sh" ]; then
     log "INFO" "Starting post-backup script"
     /hooks/post-backup.sh $backupRC
+    if [ $? -ne 0 ]; then
+        log "ERROR" "post-backup.sh was not successful."
+        exit 1
+    fi
 else
     log "DEBUG" "Post-backup script not found"
 fi

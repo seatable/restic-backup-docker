@@ -12,18 +12,20 @@ command_exists() {
     /usr/local/bin/docker exec ${DATABASE_HOST} which $1 >/dev/null 2>&1
 }
 
-# Check for mysqldump or mariadb-dump
-if command_exists mariadb-dump; then
-    DUMP_COMMAND="mariadb-dump"
-elif command_exists mysqldump; then
-    DUMP_COMMAND="mysqldump"
-else
-    log "Error" "Neither mariadb-dump nor mysqldump is available in the container."
-    exit 1
-fi
-
 # DATABASE DUMP
 if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; then
+
+    log "DEBUG" "Check for correct dump command"
+    # Check for mysqldump or mariadb-dump
+    if command_exists mariadb-dump; then
+        DUMP_COMMAND="mariadb-dump"
+    elif command_exists mysqldump; then
+        DUMP_COMMAND="mysqldump"
+    else
+        log "Error" "Neither mariadb-dump nor mysqldump is available in the container."
+        exit 1
+    fi
+
     log "INFO" "Dump the database (mariadb or mysql)"
     mkdir -p /data/database-dumps
     if [ -n "${DATABASE_LIST}" ]; then

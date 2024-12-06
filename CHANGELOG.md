@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1 (06.12.2024)
+
+- advanced error reporting if post-backup or pre-backup returns an error.
+
 ## 1.4.0 (06.12.2024)
 
 - support mariadb-dump and mysqldump, check which is available in the container
