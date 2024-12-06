@@ -44,7 +44,6 @@ if [ -f "/hooks/pre-backup.sh" ]; then
         log "ERROR" "pre-backup.sh was not successful."
         exit 1
     fi
-fi
 else
     log "DEBUG" "Pre-backup script not found"
 fi
