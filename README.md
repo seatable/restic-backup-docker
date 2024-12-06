@@ -140,7 +140,7 @@ Get the latest version of the container from <https://hub.docker.com/repository/
 ---
 services:
   restic-backup:
-    image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:1.4.1}
+    image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:latest}
     container_name: restic-backup
     restart: unless-stopped
     init: true
@@ -234,7 +234,7 @@ services:
 The simplest way to generate your `rclone.conf` file is by using the rclone configuration management command line. Follow these steps:
 
 ```
-docker run -it --entrypoint=/bin/bash seatable/restic-backup:1.4.1 -i
+docker run -it --entrypoint=/bin/bash seatable/restic-backup:latest -i
 rclone config
 # Follow the prompts to create your rclone configuration.
 # Once completed, display the contents of the configuration file:

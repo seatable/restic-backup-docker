@@ -78,11 +78,13 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          # Load build result to `docker images`
-          load: true
+          push: true
+          provenance: true
+          sbom: true
           tags: |
             ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}
             ${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
+            ${{ env.IMAGE_NAME }}:latest
           labels: |
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.version=${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
@@ -98,21 +100,20 @@ jobs:
         with:
           image-ref: "${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}"
           format: "table"
-          # exit-code: "1" => Let workflow fail if image contains vulnerabilities
-          exit-code: "0"
+          exit-code: "1"
           scanners: "vuln,misconfig"
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
 
-      - name: Push image
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}
-            ${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
-            ${{ env.IMAGE_NAME }}:latest
+      #- name: Push image
+      #  uses: docker/build-push-action@v6
+      #  with:
+      #    push: true
+      #    tags: |
+      #      ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}
+      #      ${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
+      #      ${{ env.IMAGE_NAME }}:latest
 
       #- name: Push "latest" tag
       #  run: |

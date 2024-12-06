@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.2 (06.12.2024)
+
+- Changes to improve Docker Scout Health Score
+
 ## 1.4.1 (06.12.2024)
 
 - advanced error reporting if post-backup or pre-backup returns an error.
