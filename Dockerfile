@@ -2,9 +2,9 @@ ARG BASE_IMAGE="debian:12.5-slim@sha256:3d5df92588469a4c503adbead0e4129ef3f88e22
 
 FROM ${BASE_IMAGE} as build-image
 
-ARG RCLONE_VERSION="v1.66.0"
-ARG RESTIC_VERSION="0.16.4"
-ARG DOCKER_VERSION="26.0.2"
+ARG RCLONE_VERSION="v1.68.2"
+ARG RESTIC_VERSION="0.17.3"
+ARG DOCKER_VERSION="27.3.1"
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
 unzip \
