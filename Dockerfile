@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 unzip \
 bzip2 \
 curl
-RUN apt
 
 # Get rclone binary
 ADD https://github.com/rclone/rclone/releases/download/${RCLONE_VERSION}/rclone-${RCLONE_VERSION}-linux-amd64.zip /
