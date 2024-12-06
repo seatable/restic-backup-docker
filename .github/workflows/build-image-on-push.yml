@@ -7,6 +7,9 @@ on:
       - "v*.*.*"
       - "pre-v*.*.*"
 
+env:
+  IMAGE_NAME: "seatable/restic-backup"
+
 jobs:
   init-vars:
     runs-on: ubuntu-latest
@@ -71,43 +74,50 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push image
-        uses: docker/build-push-action@v5
+      - name: Build image
+        uses: docker/build-push-action@v6
         with:
-          #context: ${{ needs.init-vars.outputs.component }}
-          push: true
+          context: .
+          # Load build result to `docker images`
+          load: true
           tags: |
-            seatable/restic-backup-verify:commit-${{ steps.get_commit.outputs.short_sha }}
-            seatable/restic-backup-verify:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
+            ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}
+            ${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
           labels: |
-            org.opencontainers.image.title=seatable/restic-backup
+            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.version=${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ steps.current_time.outputs.time }}
             org.opencontainers.image.authors=SeaTable
             org.opencontainers.image.url=https://www.seatable.io/
-            org.opencontainers.image.documentation=https://admin.seatable.io/
+            org.opencontainers.image.documentation=https://github.com/seatable/restic-backup-docker
             org.opencontainers.image.vendor=SeaTable
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "docker.io/seatable/restic-backup-verify:commit-${{ steps.get_commit.outputs.short_sha }}"
+          image-ref: "${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}"
           format: "table"
-          exit-code: "0"
+          # Let workflow fail if image contains vulnerabilities
+          exit-code: "1"
           scanners: "vuln,misconfig"
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
-        env:
-          TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+        #env:
+        # Use multiple repositories to limit the likelihood of encountering rate limits
+        #TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
 
-      - name: Move image to non verify repository
-        id: move_image
+      - name: Push image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}
+            ${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
+
+      - name: Push "latest" tag
         run: |
-          docker pull seatable/restic-backup-verify:commit-${{ steps.get_commit.outputs.short_sha }}
-          docker tag seatable/restic-backup-verify:commit-${{ steps.get_commit.outputs.short_sha }} seatable/restic-backup:commit-${{ steps.get_commit.outputs.short_sha }}
-          docker tag seatable/restic-backup:commit-${{ steps.get_commit.outputs.short_sha }} seatable/restic-backup:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
-          docker push seatable/restic-backup:commit-${{ steps.get_commit.outputs.short_sha }}
-          docker push seatable/restic-backup:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
+          docker tag ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }} ${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.IMAGE_NAME }}:latest
+        if: ${{ needs.init-vars.outputs.image_tag_prefix == '' }}
