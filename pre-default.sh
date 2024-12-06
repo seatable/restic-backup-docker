@@ -7,6 +7,21 @@ set -eo pipefail
 
 source /bin/log.sh
 
+# Function to check if a command exists in the container
+command_exists() {
+    /usr/local/bin/docker exec ${DATABASE_HOST} which $1 >/dev/null 2>&1
+}
+
+# Check for mysqldump or mariadb-dump
+if command_exists mariadb-dump; then
+    DUMP_COMMAND="mariadb-dump"
+elif command_exists mysqldump; then
+    DUMP_COMMAND="mysqldump"
+else
+    log "Error" "Neither mariadb-dump nor mysqldump is available in the container."
+    exit 1
+fi
+
 # DATABASE DUMP
 if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; then
     log "INFO" "Dump the database (mariadb or mysql)"
@@ -16,11 +31,11 @@ if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; th
         IFS=',' read -r -a DATABASE_ARRAY <<< "${DATABASE_LIST}"
         for DATABASE in "${DATABASE_ARRAY[@]}"; do
             log "DEBUG" "Let's dump the database ${DATABASE}"
-            /usr/local/bin/docker exec ${DATABASE_HOST} mysqldump -u${DATABASE_USER} -p${DATABASE_PASSWORD} --opt ${DATABASE} > /data/database-dumps/${DATABASE}.dump
+            /usr/local/bin/docker exec ${DATABASE_HOST} ${DUMP_COMMAND} -u${DATABASE_USER} -p${DATABASE_PASSWORD} --opt ${DATABASE} > /data/database-dumps/${DATABASE}.dump
         done
     else
         log "DEBUG" "Let's dump all databases"
-        /usr/local/bin/docker exec ${DATABASE_HOST} mysqldump -u${DATABASE_USER} -p${DATABASE_PASSWORD} --all-databases > /data/database-dumps/all.dump
+        /usr/local/bin/docker exec ${DATABASE_HOST} ${DUMP_COMMAND} -u${DATABASE_USER} -p${DATABASE_PASSWORD} --all-databases > /data/database-dumps/all.dump
     fi
     log "INFO" "Dump finished"
 else

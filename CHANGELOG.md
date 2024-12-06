@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0 (06.12.2024)
+
+- support mariadb-dump and mysqldump, check which is available in the container
+
 ## 1.3.2 (16.09.2024)
 
 - fixing typo in entry.sh
