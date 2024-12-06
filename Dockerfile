@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="debian:12.5-slim@sha256:3d5df92588469a4c503adbead0e4129ef3f88e223954011c2169073897547cac"
+ARG BASE_IMAGE="debian:12.8-slim@sha256:1537a6a1cbc4b4fd401da800ee9480207e7dc1f23560c21259f681db56768f63"
 
 FROM ${BASE_IMAGE} as build-image
 
@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 unzip \
 bzip2 \
 curl
+RUN apt
 
 # Get rclone binary
 ADD https://github.com/rclone/rclone/releases/download/${RCLONE_VERSION}/rclone-${RCLONE_VERSION}-linux-amd64.zip /
