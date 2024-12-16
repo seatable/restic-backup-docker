@@ -71,36 +71,36 @@ The container is set up by setting environment variables and volumes.
 
 ### Environment variables
 
-| Name                     | Description                                     | Example                                                           | Default           |
-| ------------------------ | ----------------------------------------------- | ----------------------------------------------------------------- | ----------------- |
-| `RESTIC_REPOSITORY`      | Restic backup target                            | `/local` or `rest:https://backup.seatable.io`                     | _required_        |
-| `RESTIC_PASSWORD`        | Encryption password                             | `topsecret`                                                       | _required_        |
-| `BACKUP_CRON`            | Execution schedule for the backup               | `20 2 * * *`                                                      | `20 2 * * *`      |
-| `CHECK_CRON`             | Execution schedule integrity check              | `40 3 * * 6`                                                      | `40 3 * * 6`      |
-| `LOG_LEVEL`              | Define log level                                | `DEBUG`, `INFO`, `WARNING` or `ERROR`.                            | `INFO`            |
-| `LOG_TYPE`               | Define the log output type                      | `stdout` or `file`                                                | `stdout`          |
-| `TZ`                     | Timezone                                        | `Europe/Berlin`                                                   |                   |
-| `RESTIC_TAG`             | Tag for backup                                  | `seatable`                                                        | `seatable`        |
-| `RESTIC_DATA_SUBSET`     | Restic checks only a subset of data             | `1G` or `10%` or `1/10`                                           | `1G`              |
-| `RESTIC_FORGET_ARGS`     | Restic Forget parameters                        | ` --prune --keep-daily 6 --keep-monthly 6`                        |                   |
-| `RESTIC_JOB_ARGS`        | Restic Job execution parameters                 | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` |                   |
-| `RESTIC_SKIP_INIT`       | Skip restic initialization                      | `true` or `false`                                                 | `false`           |
-| `SEATABLE_DATABASE_DUMP` | Enable mysql/mariadb database dump (DEPRECATED) | `true` or `false`                                                 | `false`           |
-| `DATABASE_DUMP`          | Enable mysql/mariadb database dump              | `true` or `false`                                                 | `false`           |
-| `DATABASE_HOST`          | Name of the mariadb/mysql container             | `mariadb`                                                         | `mariadb`         |
-| `DATABASE_USER`          | User for connection to database                 | `root`                                                            | `root`            |
-| `DATABASE_PASSWORD`      | Password for connection to database             | `topsecret`                                                       |                   |
-| `DATABASE_LIST`          | List of databases to export (empyt=all)         | `dtable_db,ccnet_db,seafile_db`                                   |                   |
-| `COMPRESS_DUMP`          | Encrypt database dump with gzip                 | `true` or `false`                                                 | `false`           |
-| `SEATABLE_BIGDATA_DUMP`  | Enable dump of big data                         | `true` or `false`                                                 | `false`           |
-| `SEATABLE_BIGDATA_HOST`  | Name of the SeaTable Server container           | `seatable-server`                                                 | `seatable-server` |
-| `HEALTHCHECK_URL`        | healthcheck.io server check url                 | `https://healthcheck.io/ping/a444061a`                            |                   |
-| `MSMTP_ARGS`             | SMTP settings for mail notification             | `--host=x --port=587 ... cdb@seatable.io`                         |                   |
-| `AWS_DEFAULT_REGION`     | Required only for S3 backend                    | `eu-west-1`                                                       |                   |
-| `AWS_ACCESS_KEY_ID`      | Required only for S3 backend                    |                                                                   |                   |
-| `AWS_SECRET_ACCESS_KEY`  | Required only for S3 backend                    |                                                                   |                   |
-| `B2_ACCOUNT_ID`          | Required only for backblaze backend             |                                                                   |                   |
-| `B2_ACCOUNT_KEY`         | Required only for backblaze backend             |                                                                   |                   |
+| Name                        | Description                                     | Example                                                           | Default           |
+| --------------------------- | ----------------------------------------------- | ----------------------------------------------------------------- | ----------------- |
+| `RESTIC_REPOSITORY`         | Restic backup target                            | `/local` or `rest:https://backup.seatable.io`                     | _required_        |
+| `RESTIC_PASSWORD`           | Encryption password                             | `topsecret`                                                       | _required_        |
+| `BACKUP_CRON`               | Execution schedule for the backup               | `20 2 * * *`                                                      | `20 2 * * *`      |
+| `CHECK_CRON`                | Execution schedule integrity check              | `40 3 * * 6`                                                      | `40 3 * * 6`      |
+| `LOG_LEVEL`                 | Define log level                                | `DEBUG`, `INFO`, `WARNING` or `ERROR`.                            | `INFO`            |
+| `LOG_TYPE`                  | Define the log output type                      | `stdout` or `file`                                                | `stdout`          |
+| `TZ`                        | Timezone                                        | `Europe/Berlin`                                                   |                   |
+| `RESTIC_TAG`                | Tag for backup                                  | `seatable`                                                        | `seatable`        |
+| `RESTIC_DATA_SUBSET`        | Restic checks only a subset of data             | `1G` or `10%` or `1/10`                                           | `1G`              |
+| `RESTIC_FORGET_ARGS`        | Restic Forget parameters                        | ` --prune --keep-daily 6 --keep-monthly 6`                        |                   |
+| `RESTIC_JOB_ARGS`           | Restic Job execution parameters                 | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` |                   |
+| `RESTIC_SKIP_INIT`          | Skip restic initialization                      | `true` or `false`                                                 | `false`           |
+| `SEATABLE_DATABASE_DUMP`    | Enable mysql/mariadb database dump (DEPRECATED) | `true` or `false`                                                 | `false`           |
+| `DATABASE_DUMP`             | Enable mysql/mariadb database dump              | `true` or `false`                                                 | `false`           |
+| `DATABASE_HOST`             | Name of the mariadb/mysql container             | `mariadb`                                                         | `mariadb`         |
+| `DATABASE_USER`             | User for connection to database                 | `root`                                                            | `root`            |
+| `DATABASE_PASSWORD`         | Password for connection to database             | `topsecret`                                                       |                   |
+| `DATABASE_LIST`             | List of databases to export (empyt=all)         | `dtable_db,ccnet_db,seafile_db`                                   |                   |
+| `DATABASE_DUMP_COMPRESSION` | Compress database dump with gzip                | `true` or `false`                                                 | `false`           |
+| `SEATABLE_BIGDATA_DUMP`     | Enable dump of big data                         | `true` or `false`                                                 | `false`           |
+| `SEATABLE_BIGDATA_HOST`     | Name of the SeaTable Server container           | `seatable-server`                                                 | `seatable-server` |
+| `HEALTHCHECK_URL`           | healthcheck.io server check url                 | `https://healthcheck.io/ping/a444061a`                            |                   |
+| `MSMTP_ARGS`                | SMTP settings for mail notification             | `--host=x --port=587 ... cdb@seatable.io`                         |                   |
+| `AWS_DEFAULT_REGION`        | Required only for S3 backend                    | `eu-west-1`                                                       |                   |
+| `AWS_ACCESS_KEY_ID`         | Required only for S3 backend                    |                                                                   |                   |
+| `AWS_SECRET_ACCESS_KEY`     | Required only for S3 backend                    |                                                                   |                   |
+| `B2_ACCOUNT_ID`             | Required only for backblaze backend             |                                                                   |                   |
+| `B2_ACCOUNT_KEY`            | Required only for backblaze backend             |                                                                   |                   |
 
 ### Mail notification
 
@@ -173,6 +173,7 @@ services:
       # - DATABASE_USER=${DATABASE_USER:-root}
       # - DATABASE_PASSWORD=${SEATABLE_MYSQL_ROOT_PASSWORD:?Variable is not set or empty}
       # - DATABASE_LIST=${DATABASE_LIST}
+      # - DATABASE_DUMP_COMPRESSION=${DATABASE_DUMP_COMPRESSION:-false}
       # - SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:-true}
       # - SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:-seatable-server}
       # - HEALTHCHECK_URL=${HEALTHCHECK_URL}
