@@ -91,7 +91,8 @@ The container is set up by setting environment variables and volumes.
 | `DATABASE_USER`          | User for connection to database                 | `root`                                                            | `root`            |
 | `DATABASE_PASSWORD`      | Password for connection to database             | `topsecret`                                                       |                   |
 | `DATABASE_LIST`          | List of databases to export (empyt=all)         | `dtable_db,ccnet_db,seafile_db`                                   |                   |
-| `SEATABLE_BIGDATA_DUMP`  | Enable dump of big data                         | `true`or`false`                                                   | `false`           |
+| `COMPRESS_DUMP`          | Encrypt database dump with gzip                 | `true` or `false`                                                 | `false`           |
+| `SEATABLE_BIGDATA_DUMP`  | Enable dump of big data                         | `true` or `false`                                                 | `false`           |
 | `SEATABLE_BIGDATA_HOST`  | Name of the SeaTable Server container           | `seatable-server`                                                 | `seatable-server` |
 | `HEALTHCHECK_URL`        | healthcheck.io server check url                 | `https://healthcheck.io/ping/a444061a`                            |                   |
 | `MSMTP_ARGS`             | SMTP settings for mail notification             | `--host=x --port=587 ... cdb@seatable.io`                         |                   |

@@ -22,7 +22,7 @@ if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; th
     elif command_exists mysqldump; then
         DUMP_COMMAND="mysqldump"
     else
-        log "Error" "Neither mariadb-dump nor mysqldump is available in the container."
+        log "ERROR" "Neither mariadb-dump nor mysqldump is available in the container."
         exit 1
     fi
 
@@ -39,6 +39,14 @@ if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; th
         log "DEBUG" "Let's dump all databases"
         /usr/local/bin/docker exec ${DATABASE_HOST} ${DUMP_COMMAND} -u${DATABASE_USER} -p${DATABASE_PASSWORD} --all-databases > /data/database-dumps/all.dump
     fi
+
+    # compress the dump files
+    if [ "${COMPRESS_DUMP}" == true ]; then
+        log "INFO" "Compressing dump files"
+        find /data/database-dumps -name "*.dump" -type f -exec gzip {} +
+        log "DEBUG" "Compression complete"
+    fi
+
     log "INFO" "Dump finished"
 else
     log "DEBUG" "Skip database dump"

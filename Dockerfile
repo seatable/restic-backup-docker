@@ -36,6 +36,7 @@ RUN \
         fuse \
         cron \
         ca-certificates \
+        gzip \
         jq \
     && apt-get clean
 

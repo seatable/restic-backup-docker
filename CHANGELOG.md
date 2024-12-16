@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0 (17.12.2024)
+
+- Add option to compress database dumps with gzip
+
 ## 1.4.2 (06.12.2024)
 
 - Changes to improve Docker Scout Health Score
