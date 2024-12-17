@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.5.0 (17.12.2024)
+## 1.5.1 (17.12.2024)
+
+- Add version to restic-curl client
+
+## 1.5.0 (16.12.2024)
 
 - Add option to compress database dumps with gzip
 

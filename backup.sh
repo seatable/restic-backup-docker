@@ -17,7 +17,7 @@ healthcheck() {
         log "INFO" "Reporting healthcheck $suffix ..."
         [[ ${1} == "/start" ]] && m="" || m=$(cat ${lastLogfile} | tail -n 300)
         curl -fSsL --retry 3 -X POST \
-            --user-agent "seatable-restic/1.0.0" \
+            --user-agent ${USER_AGENT} \
             --data-raw "$m" "${HEALTHCHECK_URL}${suffix}"
         if [ $? != 0 ]; then
             log "ERROR" "HEALTHCHECK_URL seems to be wrong..."
