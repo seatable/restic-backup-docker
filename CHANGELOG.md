@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.2 (13.01.2025)
+
+- fix: gzip overwrites existing all.dump.gz
+
 ## 1.5.1 (17.12.2024)
 
 - Add version to restic-curl client

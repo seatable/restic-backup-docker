@@ -43,7 +43,7 @@ if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; th
     # compress the dump files
     if [ "${DATABASE_DUMP_COMPRESSION}" == true ]; then
         log "INFO" "Compressing dump files"
-        find /data/database-dumps -name "*.dump" -type f -exec gzip {} +
+        find /data/database-dumps -name "*.dump" -type f -exec gzip -f {} +
         log "DEBUG" "Compression complete"
     fi
 
