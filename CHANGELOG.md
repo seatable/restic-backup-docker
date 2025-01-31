@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3 (31.01.2025)
+
+- openssh-client added to docker image
+
 ## 1.5.2 (13.01.2025)
 
 - fix: gzip overwrites existing all.dump.gz

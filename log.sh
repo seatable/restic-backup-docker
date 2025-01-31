@@ -20,7 +20,7 @@ export DATABASE_DUMP_COMPRESSION=${DATABASE_DUMP_COMPRESSION:="false"}
 export SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:="false"}
 export SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:="seatable-server"}
 export HEALTHCHECK_URL=${HEALTHCHECK_URL:=""}
-export USER_AGENT=${USER_AGENT:="restic-backup-docker/1.5.2"}
+export USER_AGENT=${USER_AGENT:="restic-backup-docker/1.5.3"}
 
 log() {
     local LEVEL="$1"
