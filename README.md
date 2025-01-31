@@ -256,3 +256,18 @@ Your .env might look like this:
 ```
 RESTIC_REPOSITORY="rclone:dropbox-restic:/Backup Folder"
 ```
+
+### Use SSH as protocol
+
+If you want to backup via ssh, please use `RESTIC_REPOSITRY` like this `sftp:<username>@<target-ip-or-url>:<path>`
+
+Restic **does not support** sending passwords directly for SFTP connections. Instead, it relies on passwordless authentication using SSH keys. This is because automated backups require a secure and non-interactive way to connect to the server, which passwordless SSH provides. Therefore create a new SSH key pair on your host and mount it to your container like this:
+
+```
+services:
+  restic-backup:
+    ...
+    volumes:
+      ...
+      - /root/.ssh:/root/.ssh
+```
