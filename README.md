@@ -161,7 +161,7 @@ services:
       - RESTIC_PASSWORD=${RESTIC_PASSWORD:?Variable is not set or empty}
       # - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME:-seatable}
       # - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *} # Start backup always at 2:15 am.
-      # - CHECK_CRON=${CHECK_CRON:-45 3 \* \* 6} # Start check every sunday at 3:45am
+      # - CHECK_CRON=${CHECK_CRON:-45 3 * * 6} # Start check every sunday at 3:45am
       # - LOG_LEVEL=${LOG_LEVEL:-INFO}
       # - LOG_TYPE=${LOG_TYPE:-stdout}
       # - TZ=${TIME_ZONE}
