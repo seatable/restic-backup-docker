@@ -57,7 +57,7 @@ log "DEBUG" "RESTIC_JOB_ARGS: ${RESTIC_JOB_ARGS}"
 log "DEBUG" "RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}"
 
 log "DEBUG" "Save directory tree:"
-tree -a -P .exclude_from_backup -L 4 ${backup_dir} >> $lastLogfile
+tree -a -P *.gz -P *.dump -P .exclude_from_backup -L 3 ${backup_dir} >> $lastLogfile
 
 log "DEBUG" "Healthcheck start"
 healthcheck /start

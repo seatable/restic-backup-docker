@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4 (10.02.2025)
+
+- improved tree output
+- added AWS to proposed docker-compose.yml
+
 ## 1.5.3 (31.01.2025)
 
 - openssh-client added to docker image
