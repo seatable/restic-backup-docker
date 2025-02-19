@@ -75,8 +75,8 @@ The container is set up by setting environment variables and volumes.
 | --------------------------- | ----------------------------------------------- | ----------------------------------------------------------------- | -------------------------------- |
 | `RESTIC_REPOSITORY`         | Restic backup target                            | `/local` or `rest:https://backup.seatable.io`                     | _required_                       |
 | `RESTIC_PASSWORD`           | Encryption password                             | `topsecret`                                                       | _required_                       |
-| `BACKUP_CRON`               | Execution schedule for the backup               | `20 2 * * *`                                                      | `20 2 * * *`                     |
-| `CHECK_CRON`                | Execution schedule integrity check              | `40 3 * * 6`                                                      | `40 3 * * 6`                     |
+| `BACKUP_CRON`               | Execution schedule for the backup               | `20 2 * * *` (Do not enclose the schedule in quotes)              | `20 2 * * *`                     |
+| `CHECK_CRON`                | Execution schedule integrity check              | `40 3 * * 6` (Do not enclose the schedule in quotes)              | `40 3 * * 6`                     |
 | `LOG_LEVEL`                 | Define log level                                | `DEBUG`, `INFO`, `WARNING` or `ERROR`.                            | `INFO`                           |
 | `LOG_TYPE`                  | Define the log output type                      | `stdout` or `file`                                                | `stdout`                         |
 | `TZ`                        | Timezone                                        | `Europe/Berlin`                                                   |                                  |
