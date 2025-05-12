@@ -1,0 +1,2 @@
+# Ignore this JWT library CVE as our rclone is up-to-date
+CVE-2025-30204

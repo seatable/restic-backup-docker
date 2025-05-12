@@ -48,7 +48,7 @@ COPY --from=build-image /bin/rclone /bin/rclone
 COPY --from=build-image /bin/restic /bin/restic
 COPY --from=build-image /tmp/docker /usr/local/bin/docker
 
-# output rclone version
+# output rclone version (to check, that the latest version is installed)
 RUN /bin/rclone --version
 
 RUN mkdir -p /local /var/log/restic \
