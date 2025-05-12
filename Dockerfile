@@ -5,6 +5,7 @@ FROM ${BASE_IMAGE} as build-image
 ARG RCLONE_VERSION="v1.69.2"
 ARG RESTIC_VERSION="0.18.0"
 ARG DOCKER_VERSION="28.1.1"
+ENV SUPERCRONIC_VERSION="v0.2.33"
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
 unzip \
@@ -25,6 +26,14 @@ RUN tar --extract --file docker-${DOCKER_VERSION}.tgz --directory /tmp/ --strip-
 
 FROM ${BASE_IMAGE} as runtime-image
 
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+RUN groupadd -g ${GROUP_ID} appuser && \
+    useradd -u ${USER_ID} -g appuser -s /bin/sh -d /home/appuser appuser && \
+    mkdir -p /home/appuser && \
+    chown -R appuser:appuser /home/appuser
+
 RUN \
     apt-get update \
     && apt-get upgrade -y \
@@ -35,7 +44,6 @@ RUN \
         msmtp \
         tree \
         fuse \
-        cron \
         ca-certificates \
         gzip \
         jq \
@@ -43,26 +51,33 @@ RUN \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# get rclone and restic from build-image
+# Install supercronic (instead of cron)
+RUN curl -fsSLO "https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-linux-amd64" && \
+    chmod +x supercronic-linux-amd64 && \
+    mv supercronic-linux-amd64 /usr/local/bin/supercronic
+
 COPY --from=build-image /bin/rclone /bin/rclone
 COPY --from=build-image /bin/restic /bin/restic
 COPY --from=build-image /tmp/docker /usr/local/bin/docker
 
-RUN mkdir -p /local /var/log/restic \
-    && touch /var/log/cron.log \
-    && touch /var/log/restic/backup.log \
-    && touch /var/log/restic/lastrun.log \
-    && chmod +x /bin/rclone /bin/restic /usr/local/bin/docker
-
-# /data is the dir where you have to put the data to be backed up
-VOLUME /data
+RUN mkdir -p /local /var/log/restic /var/spool/cron/crontabs && \
+    touch /var/log/cron.log /var/log/restic/backup.log /var/log/restic/lastrun.log && \
+    chown -R appuser:appuser /local /var/log /var/spool/cron/crontabs && \
+    chmod +x /bin/rclone /bin/restic /usr/local/bin/docker
 
 COPY backup.sh /bin/backup
 COPY check.sh /bin/check
 COPY entry.sh /bin/entry.sh
 COPY log.sh /bin/log.sh
 COPY pre-default.sh /bin/pre-default.sh
-RUN chmod +x /bin/backup /bin/check /bin/entry.sh /bin/log.sh /bin/pre-default.sh
+COPY crontab /var/spool/cron/crontabs/appuser
 
+RUN chmod +x /bin/backup /bin/check /bin/entry.sh /bin/log.sh /bin/pre-default.sh && \
+    chown appuser:appuser /var/spool/cron/crontabs/appuser && \
+    chmod 600 /var/spool/cron/crontabs/appuser
+
+VOLUME /data
+
+USER appuser:appuser
 ENTRYPOINT ["/bin/entry.sh"]
-CMD ["cron", "-f", "-L", "2"]
+CMD ["supercronic", "/var/spool/cron/crontabs/appuser"]
