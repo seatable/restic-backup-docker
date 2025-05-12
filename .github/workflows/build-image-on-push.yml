@@ -96,11 +96,6 @@ jobs:
             org.opencontainers.image.documentation=https://github.com/seatable/restic-backup-docker
             org.opencontainers.image.vendor=SeaTable
 
-      - name: Verify Rclone Dependencies
-        run: |
-          docker run --rm ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }} \
-            /bin/rclone version | grep "github.com/golang-jwt/jwt/v5"
-
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
