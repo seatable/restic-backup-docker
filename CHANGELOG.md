@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0 (12.05.2025)
+
+- updated software versions and debian base image
+- run as non root
+
 ## 1.5.4 (10.02.2025)
 
 - improved tree output
