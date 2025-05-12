@@ -81,6 +81,7 @@ jobs:
           push: true
           provenance: true
           sbom: true
+          no-cache: true  # ensure fresh download of software packages
           tags: |
             ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}
             ${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
@@ -95,6 +96,11 @@ jobs:
             org.opencontainers.image.documentation=https://github.com/seatable/restic-backup-docker
             org.opencontainers.image.vendor=SeaTable
 
+      - name: Verify Rclone Dependencies
+        run: |
+          docker run --rm ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }} \
+            /bin/rclone version | grep "github.com/golang-jwt/jwt/v5"
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -105,6 +111,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
+          command: 'image --reset'
 
       #- name: Push image
       #  uses: docker/build-push-action@v6
