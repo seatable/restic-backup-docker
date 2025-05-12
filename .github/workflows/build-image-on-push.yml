@@ -106,19 +106,3 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
-          command: 'image --reset'
-
-      #- name: Push image
-      #  uses: docker/build-push-action@v6
-      #  with:
-      #    push: true
-      #    tags: |
-      #      ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}
-      #      ${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
-      #      ${{ env.IMAGE_NAME }}:latest
-
-      #- name: Push "latest" tag
-      #  run: |
-      #    docker tag ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }} ${{ env.IMAGE_NAME }}:latest
-      #    docker push ${{ env.IMAGE_NAME }}:latest
-      #  if: ${{ needs.init-vars.outputs.image_tag_prefix == '' }}

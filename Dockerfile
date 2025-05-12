@@ -48,6 +48,9 @@ COPY --from=build-image /bin/rclone /bin/rclone
 COPY --from=build-image /bin/restic /bin/restic
 COPY --from=build-image /tmp/docker /usr/local/bin/docker
 
+# output rclone version
+RUN /bin/rclone --version
+
 RUN mkdir -p /local /var/log/restic \
     && touch /var/log/cron.log \
     && touch /var/log/restic/backup.log \
