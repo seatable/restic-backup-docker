@@ -1,10 +1,10 @@
-ARG BASE_IMAGE="debian:12.8-slim@sha256:1537a6a1cbc4b4fd401da800ee9480207e7dc1f23560c21259f681db56768f63"
+ARG BASE_IMAGE="debian:12.10-slim@sha256:5accafaaf0f2c0a3ee5f2dcd9a5f2ef7ed3089fe4ac6a9fc9b1cf16396571322"
 
 FROM ${BASE_IMAGE} as build-image
 
-ARG RCLONE_VERSION="v1.69.0"
-ARG RESTIC_VERSION="0.17.3"
-ARG DOCKER_VERSION="27.4.1"
+ARG RCLONE_VERSION="v1.69.2"
+ARG RESTIC_VERSION="0.18.0"
+ARG DOCKER_VERSION="28.1.1"
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
 unzip \
@@ -27,6 +27,7 @@ FROM ${BASE_IMAGE} as runtime-image
 
 RUN \
     apt-get update \
+    && apt-get upgrade -y \
     && apt-get install --no-install-recommends -y \
         curl \
         openssl \
@@ -39,7 +40,8 @@ RUN \
         gzip \
         jq \
         openssh-client \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # get rclone and restic from build-image
 COPY --from=build-image /bin/rclone /bin/rclone
