@@ -46,7 +46,7 @@ log "DEBUG" "MSMTP_ARGS: ${MSMTP_ARGS}"
 log "DEBUG" "HEALTHCHECK_URL: ${HEALTHCHECK_URL}"
 log "DEBUG" "USER_AGENT: ${USER_AGENT}"
 
-if [ "${RESTIC_SKIP_INIT}" == true ]; then
+if [ "${RESTIC_SKIP_INIT}" = "true" ]; then
     log "INFO" "Skip restic init"
 else
     log "DEBUG" "Check if restic repository exists, otherwise initialize."

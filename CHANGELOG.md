@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1 (2.9.2025)
+
+- use always string (instead of boolean) for true and false
+
 ## 1.6.0 (12.05.2025)
 
 - updated software versions and debian base image

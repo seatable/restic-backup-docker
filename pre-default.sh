@@ -13,7 +13,7 @@ command_exists() {
 }
 
 # DATABASE DUMP
-if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; then
+if [ "${DATABASE_DUMP}" = "true" ] || [ "${SEATABLE_DATABASE_DUMP}" = "true" ]; then
 
     log "DEBUG" "Check for correct dump command"
     # Check for mysqldump or mariadb-dump
@@ -41,7 +41,7 @@ if [ "${DATABASE_DUMP}" == true ] || [ "${SEATABLE_DATABASE_DUMP}" == true ]; th
     fi
 
     # compress the dump files
-    if [ "${DATABASE_DUMP_COMPRESSION}" == true ]; then
+    if [ "${DATABASE_DUMP_COMPRESSION}" = "true" ]; then
         log "INFO" "Compressing dump files"
         find /data/database-dumps -name "*.dump" -type f -exec gzip -f {} +
         log "DEBUG" "Compression complete"
@@ -53,7 +53,7 @@ else
 fi
 
 # BIG DATA DUMP
-if [ "${SEATABLE_BIGDATA_DUMP}" == true ]; then
+if [ "${SEATABLE_BIGDATA_DUMP}" == "true" ]; then
     log "INFO" "Dump big data"
     /usr/local/bin/docker exec ${SEATABLE_BIGDATA_HOST} /opt/seatable/scripts/seatable.sh backup-all
     log "INFO" "Dump finished"

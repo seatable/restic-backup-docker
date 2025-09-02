@@ -2,25 +2,31 @@
 # $LOG_LEVEL is the requested log level of the container, defined by the user in the ENV_VARIABLES
 # $LEVEL is the level of the log message.
 
+set_default() {
+  local var_name=$1
+  local default_value=$2
+  export "$var_name"="${!var_name:-$default_value}"
+}
+
 # set default values for all other environment variables
-export BACKUP_CRON=${BACKUP_CRON:="20 2 * * *"}
-export CHECK_CRON=${CHECK_CRON:="40 3 * * 6"}
-export LOG_LEVEL=${LOG_LEVEL:="INFO"}
-export LOG_TYPE=${LOG_TYPE:="stdout"}
-export RESTIC_TAG=${RESTIC_TAG:="seatable"}
-export RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:="1G"}
-export RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:=""}
-export RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:=""}
-export RESTIC_SKIP_INIT=${RESTIC_SKIP_INIT:="false"}
-export DATABASE_DUMP=${DATABASE_DUMP:="false"}
-export DATABASE_HOST=${DATABASE_HOST:="mariadb"}
-export DATABASE_USER=${DATABASE_USER:="root"}
-export DATABASE_LIST=${DATABASE_LIST:=""}
-export DATABASE_DUMP_COMPRESSION=${DATABASE_DUMP_COMPRESSION:="false"}
-export SEATABLE_BIGDATA_DUMP=${SEATABLE_BIGDATA_DUMP:="false"}
-export SEATABLE_BIGDATA_HOST=${SEATABLE_BIGDATA_HOST:="seatable-server"}
-export HEALTHCHECK_URL=${HEALTHCHECK_URL:=""}
-export USER_AGENT=${USER_AGENT:="restic-backup-docker/1.6.0"}
+set_default BACKUP_CRON "20 2 * * *"
+set_default CHECK_CRON "40 3 * * 6"
+set_default LOG_LEVEL "INFO"
+set_default LOG_TYPE "stdout"
+set_default RESTIC_TAG "seatable"
+set_default RESTIC_DATA_SUBSET "1G"
+set_default RESTIC_FORGET_ARGS ""
+set_default RESTIC_JOB_ARGS ""
+set_default RESTIC_SKIP_INIT false
+set_default DATABASE_DUMP false
+set_default DATABASE_HOST "mariadb"
+set_default DATABASE_USER "root"
+set_default DATABASE_LIST ""
+set_default DATABASE_DUMP_COMPRESSION "false"
+set_default SEATABLE_BIGDATA_DUMP "false"
+set_default SEATABLE_BIGDATA_HOST "seatable-server"
+set_default HEALTHCHECK_URL ""
+set_default USER_AGENT "restic-backup-docker/1.6.1"
 
 log() {
     local LEVEL="$1"
