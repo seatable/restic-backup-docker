@@ -144,6 +144,7 @@ services:
   restic-backup:
     image: ${SEATABLE_RESTIC_BACKUP_IMAGE:-seatable/restic-backup:latest}
     container_name: restic-backup
+    hostname: ${RESTIC_HOSTNAME:-restic-backup}
     restart: unless-stopped
     init: true
     volumes:
