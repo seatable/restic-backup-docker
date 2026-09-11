@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.7.0 (11.09.2026)
+
+- new environment variable `RESTIC_TIMEOUT` (default `48h`): restic commands that hang are killed, the lock is removed and the failure is reported. Prevents a hanging run from blocking all following backups.
+- healthcheck `/0` is only sent after backup **and** forget finished successfully (before, a hanging forget was reported as success)
+- a failed healthcheck ping no longer aborts the backup, it is logged as warning
+- failures of `pre-default.sh` (database dump) and `pre-backup.sh` are now reported via healthcheck `/fail` and mail
+- healthcheck `/start` is sent before the pre-scripts, so a hanging database dump is detected by the healthcheck server too
+- skipped cron jobs (previous backup or check still running) are now logged as error instead of silently skipped
+- curl healthcheck requests have a timeout of 30 seconds
+- `post-check.sh` now receives the exit code of `restic check` (was always empty)
+- `backup` and `check` exit with the restic status code on failure (was always 0)
+- `procps` added to the image (`ps`, `kill`) to debug hanging processes
+- fix: WARNING log messages were labeled as INFO
+- README: recommend S3 endpoint for Backblaze B2
+
 ## 1.6.1 (2.9.2025)
 
 - use always string (instead of boolean) for true and false

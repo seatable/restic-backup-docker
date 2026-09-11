@@ -85,6 +85,7 @@ The container is set up by setting environment variables and volumes.
 | `RESTIC_FORGET_ARGS`        | Restic Forget parameters                        | ` --prune --keep-daily 6 --keep-monthly 6`                        |                                  |
 | `RESTIC_JOB_ARGS`           | Restic Job execution parameters                 | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` |                                  |
 | `RESTIC_SKIP_INIT`          | Skip restic initialization                      | `true` or `false`                                                 | `false`                          |
+| `RESTIC_TIMEOUT`            | Max. runtime per restic command (see below)     | `48h`, `90m` or `0` to disable                                    | `48h`                            |
 | `SEATABLE_DATABASE_DUMP`    | Enable mysql/mariadb database dump (DEPRECATED) | `true` or `false`                                                 | `false`                          |
 | `DATABASE_DUMP`             | Enable mysql/mariadb database dump              | `true` or `false`                                                 | `false`                          |
 | `DATABASE_HOST`             | Name of the mariadb/mysql container             | `mariadb`                                                         | `mariadb`                        |
@@ -102,6 +103,32 @@ The container is set up by setting environment variables and volumes.
 | `B2_ACCOUNT_ID`             | Required only for backblaze backend             |                                                                   |                                  |
 | `B2_ACCOUNT_KEY`            | Required only for backblaze backend             |                                                                   |                                  |
 | `USER_AGENT`                | Define the user agent used with curl            | `restic-backup-docker/<version>`                                  | `restic-backup-docker/<version>` |
+
+### Timeout for hanging restic commands
+
+`RESTIC_TIMEOUT` is a safety net against restic commands that hang forever. This can happen if a backend stops responding
+in a way that restic's own retry logic does not catch (observed with the native Backblaze `b2:` backend, see below).
+Without a timeout, such a run blocks all following scheduled backups silently, because the lock is never released.
+
+- The timeout applies **per restic command**: `backup`, `forget` and `check` each get the full time.
+- A valid backup is never affected as long as the timeout is larger than your longest run. Choose at least twice your
+  longest expected runtime. For a first backup of a very large dataset over a slow line, raise it or disable it temporarily with `0`.
+- If the timeout hits, restic is stopped, the repository lock is removed, the error is reported via healthcheck, mail and
+  container log (`aborted by RESTIC_TIMEOUT`) and the next scheduled run works again.
+
+### Backblaze B2: use the S3 endpoint
+
+The native `b2:` backend of restic uses a library that retries a failed upload endlessly, below restic's own retry limit.
+If a B2 storage pod becomes unreachable, `restic backup` or `restic forget --prune` hangs forever. We recommend to use the
+S3 compatible endpoint of Backblaze instead. It is the same bucket and the same repository, only the address changes:
+
+```bash
+RESTIC_REPOSITORY=s3:s3.<region>.backblazeb2.com/<bucket>/<path>
+AWS_ACCESS_KEY_ID=<keyID>
+AWS_SECRET_ACCESS_KEY=<applicationKey>
+```
+
+The region is part of the S3 endpoint shown in the bucket details of your Backblaze account (e.g. `eu-central-003`).
 
 ### Mail notification
 
@@ -170,6 +197,7 @@ services:
       # - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
       # - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
       # - RESTIC_SKIP_INIT=${RESTIC_SKIP_INIT}
+      # - RESTIC_TIMEOUT=${RESTIC_TIMEOUT:-48h} # Max. runtime per restic command, 0 disables
       # - DATABASE_DUMP=${DATABASE_DUMP:-true}
       # - DATABASE_HOST=${DATABASE_HOST:-mariadb}
       # - DATABASE_USER=${DATABASE_USER:-root}

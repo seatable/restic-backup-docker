@@ -13,6 +13,12 @@ if ! [[ "$LOG_LEVEL" =~ ^(INFO|WARNING|DEBUG|ERROR)$ ]]; then
     exit 1
 fi
 
+# check for valid RESTIC_TIMEOUT (a duration for the timeout command like 48h, 90m or 3600s; 0 disables the timeout)
+if [ -n "$RESTIC_TIMEOUT" ] && ! [[ "$RESTIC_TIMEOUT" =~ ^[0-9]+(\.[0-9]+)?[smhd]?$ ]]; then
+    log "ERROR" "Invalid value for RESTIC_TIMEOUT found. Allowed is a number with optional suffix s, m, h or d (e.g. 48h) or 0 to disable. Exiting"
+    exit 1
+fi
+
 # check for mandatory input (RESTIC_REPOSITORY, RESTIC_PASSWORD)
 [ -z "$RESTIC_REPOSITORY" ] && { log "ERROR" "RESTIC_REPOSITORY is not set. Exiting."; exit 1; }
 [ -z "$RESTIC_PASSWORD" ] && { log "ERROR" "RESTIC_PASSWORD is not set. Exiting."; exit 1; }
@@ -35,6 +41,7 @@ log "DEBUG" "RESTIC_DATA_SUBSET: ${RESTIC_DATA_SUBSET}"
 log "DEBUG" "RESTIC_FORGET_ARGS: ${RESTIC_FORGET_ARGS}"
 log "DEBUG" "RESTIC_JOB_ARGS: ${RESTIC_JOB_ARGS}"
 log "DEBUG" "RESTIC_SKIP_INIT: ${RESTIC_SKIP_INIT}"
+log "DEBUG" "RESTIC_TIMEOUT: ${RESTIC_TIMEOUT}"
 log "DEBUG" "DATABASE_DUMP: ${DATABASE_DUMP}"
 log "DEBUG" "DATABASE_HOST: ${DATABASE_HOST}"
 log "DEBUG" "DATABASE_USER: ${DATABASE_USER}"
@@ -68,12 +75,12 @@ else
 fi
 
 log "INFO" "Setup backup cron job with cron expression BACKUP_CRON: ${BACKUP_CRON}"
-echo "${BACKUP_CRON} root /usr/bin/flock -n /var/run/backup.lock /bin/backup >/proc/1/fd/1 2>/proc/1/fd/2" > /etc/crontab
+echo "${BACKUP_CRON} root /bin/cron-run backup >/proc/1/fd/1 2>/proc/1/fd/2" > /etc/crontab
 
 # If CHECK_CRON is set, automatic backup checking is enabled
 if [ -n "${CHECK_CRON}" ]; then
     log "INFO" "Setup check cron job with cron expression CHECK_CRON: ${CHECK_CRON}"
-    echo "${CHECK_CRON} root /usr/bin/flock -n /var/run/backup.lock /bin/check >/proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
+    echo "${CHECK_CRON} root /bin/cron-run check >/proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
 else
     log "DEBUG" "NO CHECK_CRON defined"
 fi

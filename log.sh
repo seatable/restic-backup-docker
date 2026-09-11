@@ -18,6 +18,7 @@ set_default RESTIC_DATA_SUBSET "1G"
 set_default RESTIC_FORGET_ARGS ""
 set_default RESTIC_JOB_ARGS ""
 set_default RESTIC_SKIP_INIT false
+set_default RESTIC_TIMEOUT "48h"
 set_default DATABASE_DUMP false
 set_default DATABASE_HOST "mariadb"
 set_default DATABASE_USER "root"
@@ -26,7 +27,7 @@ set_default DATABASE_DUMP_COMPRESSION "false"
 set_default SEATABLE_BIGDATA_DUMP "false"
 set_default SEATABLE_BIGDATA_HOST "seatable-server"
 set_default HEALTHCHECK_URL ""
-set_default USER_AGENT "restic-backup-docker/1.6.1"
+set_default USER_AGENT "restic-backup-docker/1.7.0"
 
 log() {
     local LEVEL="$1"
@@ -43,7 +44,7 @@ log() {
             [[ "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo -e "[$TIMESTAMP] [INFO] $MESSAGE" >&2
             ;;
         "WARNING")
-            [[ "$LOG_LEVEL" == "WARNING"  || "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo -e "[$TIMESTAMP] [INFO] $MESSAGE" >&2
+            [[ "$LOG_LEVEL" == "WARNING"  || "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo -e "[$TIMESTAMP] [WARNING] $MESSAGE" >&2
             ;;
         "ERROR")
             [[ "$LOG_LEVEL" == "ERROR" || "$LOG_LEVEL" == "WARNING"  || "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo -e "[$TIMESTAMP] [ERROR] $MESSAGE" >&2
@@ -60,7 +61,7 @@ log() {
                 [[ "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo -e "[$TIMESTAMP] [INFO] $MESSAGE" >> $LOG_FILE
                 ;;
             "WARNING")
-                [[ "$LOG_LEVEL" == "WARNING"  || "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo -e "[$TIMESTAMP] [INFO] $MESSAGE" >> $LOG_FILE
+                [[ "$LOG_LEVEL" == "WARNING"  || "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo -e "[$TIMESTAMP] [WARNING] $MESSAGE" >> $LOG_FILE
                 ;;
             "ERROR")
                 [[ "$LOG_LEVEL" == "ERROR" || "$LOG_LEVEL" == "WARNING"  || "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo -e "[$TIMESTAMP] [ERROR] $MESSAGE" >> $LOG_FILE
