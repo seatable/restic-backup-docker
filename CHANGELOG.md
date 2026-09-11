@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.1 (11.09.2026)
+
+- updated software versions: restic 0.19.1, rclone v1.75.1, docker 29.8.0, debian 12.15-slim
+- `.trivyignore`: Go stdlib and dependency CVEs of the current restic/rclone release binaries (fixable only by upstream releases)
+
 ## 1.7.0 (11.09.2026)
 
 - new environment variable `RESTIC_TIMEOUT` (default `48h`): restic commands that hang are killed, the lock is removed and the failure is reported. Prevents a hanging run from blocking all following backups.

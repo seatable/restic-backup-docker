@@ -1,2 +1,21 @@
-# Ignore this JWT library CVE as our rclone is up-to-date
-CVE-2025-30204
+# CVEs in the Go standard library and Go dependencies of the restic and rclone release binaries.
+# We always ship the latest release of both tools, these findings can only be fixed by a new upstream release.
+# Review this list with every version bump in the Dockerfile and remove entries that are no longer reported.
+
+# restic 0.19.1 (built with go1.26.4)
+CVE-2026-33818
+CVE-2026-39821
+CVE-2026-39822
+CVE-2026-46600
+CVE-2026-56852
+CVE-2026-56853
+CVE-2026-56854
+CVE-2026-56858
+CVE-2026-56859
+CVE-2026-56860
+CVE-2026-56862
+CVE-2026-84304
+GHSA-hrxh-6v49-42gf
+
+# restic 0.19.1 and rclone v1.75.1 (google.golang.org/grpc)
+CVE-2026-84445
