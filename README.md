@@ -91,7 +91,7 @@ The container is set up by setting environment variables and volumes.
 | `LOG_TYPE`                  | Define the log output type                      | `stdout` or `file`                                                | `stdout`                         |
 | `TZ`                        | Timezone                                        | `Europe/Berlin`                                                   |                                  |
 | `RESTIC_TAG`                | Tag for backup                                  | `seatable`                                                        | `seatable`                       |
-| `RESTIC_DATA_SUBSET`        | Data read by the integrity check (see below)    | `1G`, `10%`, `rotate:10` or `none`                                | `1G`                             |
+| `RESTIC_DATA_SUBSET`        | Data read by the integrity check (see below)    | `rotate:10`, `1G`, `10%` or `none`                                | `rotate:10`                      |
 | `RESTORE_TEST`              | Restore a random file after each check          | `true` or `false`                                                 | `false`                          |
 | `RESTIC_FORGET_ARGS`        | Restic Forget parameters                        | ` --keep-daily 6 --keep-monthly 6`                                |                                  |
 | `RESTIC_JOB_ARGS`           | Restic Job execution parameters                 | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` |                                  |
@@ -125,15 +125,22 @@ proven to be intact.
 
 | `RESTIC_DATA_SUBSET` | Data read per check | Coverage |
 | -------------------- | ------------------- | -------- |
-| `1G` (default) or `10%` | a random 1 GB / 10 % of the repository | random – a block may not be read for a long time |
-| `rotate:N` | a fixed 1/N part, a different one every calendar week | **complete – every block is verified once every N weeks** |
+| `rotate:N` (default `rotate:10`) | a fixed 1/N part, a different one every calendar week | **complete – every block is verified once every N weeks** |
+| `1G` or `10%` | a random 1 GB / 10 % of the repository | random – a block may not be read for a long time |
 | `none` | nothing, structure only | – |
 
-`rotate:N` is the recommended setting with a weekly `CHECK_CRON`: choose `N` so that `repository size / N` fits your
-weekly bandwidth and traffic budget, e.g. `rotate:4` for a 5 GB repository (all data every month), `rotate:10` for
-200 GB (20 GB per week, all data every 10 weeks), `rotate:52` for 2 TB (all data every year). The part is derived from
-the ISO week number, so it only rotates completely with a weekly schedule. The container logs which part is read:
-`Check reads part 7/10 of the repository data`.
+> **⚠️ The default downloads 1/10 of your repository every week.** With `rotate:10` every weekly check reads a tenth of
+> all data stored in the repository from the backend: 20 GB per week for a 200 GB repository, 200 GB per week for 2 TB.
+> Make sure this fits your bandwidth and the traffic pricing of your storage provider (Backblaze B2 offers free egress up
+> to three times the stored volume per month, AWS S3 and others charge per GB). If it does not, raise `N` – the check
+> then reads less per week and takes longer to cover everything – or fall back to a fixed amount like `1G`.
+> Versions before 1.8.1 read a random 1 GB per check; if you upgrade with a large repository and have not set
+> `RESTIC_DATA_SUBSET`, the weekly download grows accordingly.
+
+Choose `N` so that `repository size / N` fits your weekly budget: `rotate:4` for a 5 GB repository (1.3 GB per week,
+all data every month), `rotate:10` for 200 GB (20 GB per week, all data every 10 weeks), `rotate:52` for 2 TB (40 GB
+per week, all data every year). The part is derived from the ISO week number, so it only rotates completely with a
+weekly `CHECK_CRON`. The container logs which part is read: `Check reads part 7/10 of the repository data`.
 
 **Restore test**: with `RESTORE_TEST=true`, every check additionally restores one random file (up to 100 MiB) of the
 latest snapshot with `restic restore` to a temporary directory inside the container and compares its SHA-256 with the
@@ -142,8 +149,9 @@ The result is logged (`Restore test: restored /data/... from snapshot ..., check
 the healthcheck body and the mail. A failed restore test is reported like a failed check: healthcheck `/fail`, exit code
 1. The restore test is skipped if the check itself failed.
 
-To disable: `RESTORE_TEST=false` (default) turns off the restore test, `RESTIC_DATA_SUBSET=none` turns off data
-reading, `CHECK_CRON=` (empty) turns off the scheduled check altogether.
+To disable: `RESTORE_TEST=false` (default) turns off the restore test, `RESTIC_DATA_SUBSET=1G` limits the weekly
+download to a fixed amount, `RESTIC_DATA_SUBSET=none` turns off data reading, `CHECK_CRON=` (empty) turns off the
+scheduled check altogether.
 
 Neither check proves that the backup contains everything you need to bring your application back. Test that
 periodically by hand: restore the latest snapshot to `/restore`, load the database dump into a fresh database and start
@@ -276,7 +284,7 @@ services:
       # - LOG_LEVEL=${LOG_LEVEL:-INFO}
       # - LOG_TYPE=${LOG_TYPE:-stdout}
       # - TZ=${TIME_ZONE}
-      # - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-rotate:10} # Verify 1/10 of the repository data per week, everything every 10 weeks
+      # - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-rotate:10} # Downloads and verifies 1/10 of the repository per week. Raise N for large repositories!
       # - RESTORE_TEST=${RESTORE_TEST:-true} # Restore a random file after each check and compare it with the original
       # - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
       # - RESTIC_PRUNE_ARGS=${RESTIC_PRUNE_ARGS:-}

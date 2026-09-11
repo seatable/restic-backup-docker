@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.1 (11.09.2026)
+
+- **default of `RESTIC_DATA_SUBSET` changed from `1G` to `rotate:10`**: the weekly check now downloads and verifies 1/10 of the repository. With a large repository, set `RESTIC_DATA_SUBSET` explicitly (higher `N` or a fixed amount like `1G`) before upgrading
+
 ## 1.8.0 (11.09.2026)
 
 - `RESTIC_DATA_SUBSET=rotate:N`: the check reads a different 1/N part of the repository data every calendar week, so all data is verified once every N weeks (instead of a random subset)

@@ -229,6 +229,19 @@ test_check_rotates_data_subset() {
     [ $ok = 0 ] || show_output
 }
 
+test_check_default_is_rotate_10() {
+    mkdir -p "$TMP/repo/rotate-default"
+    local part
+    part=$(( ($((10#$(date +%V))) - 1) % 10 + 1 ))
+    run_in_image rotate-default 60 -v "$TMP/data:/data:ro" -v "$TMP/repo/rotate-default:/local" -- '
+        restic init -q >/dev/null 2>&1; HEALTHCHECK_URL= /bin/backup >/dev/null 2>&1
+        /bin/check; echo "EXIT=$?"'
+    local ok=0
+    assert_eq "exit code" "$(exit_code)" "0" || ok=1
+    assert_contains "output" "$OUT" "Check reads part ${part}/10 of the repository data (RESTIC_DATA_SUBSET=rotate:10" || ok=1
+    [ $ok = 0 ] || show_output
+}
+
 test_restore_test_success() {
     mkdir -p "$TMP/repo/restore"
     run_in_image restore-ok 90 -v "$TMP/data:/data:ro" -v "$TMP/repo/restore:/local" -e RESTORE_TEST=true -- '
@@ -358,6 +371,7 @@ test_case "job scheduled while another one runs is logged as skipped"   test_ski
 test_case "backup exit code 3 is a warning, forget runs, /0 is sent"    test_backup_exit_3_is_warning
 test_case "failed backup skips forget, sends /fail, exits non-zero"     test_backup_failure_exit_code
 test_case "check rotates the data subset by calendar week"              test_check_rotates_data_subset
+test_case "check default is rotate:10"                                   test_check_default_is_rotate_10
 test_case "restore test restores a file and compares the checksum"      test_restore_test_success
 test_case "failed restore test reports /fail and exits non-zero"        test_restore_test_failure
 test_case "entry.sh rejects an invalid RESTIC_TIMEOUT"                  test_entry_rejects_invalid_timeout
