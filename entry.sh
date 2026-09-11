@@ -20,6 +20,12 @@ if [ -n "$RESTIC_TIMEOUT" ] && ! [[ "$RESTIC_TIMEOUT" =~ ^[0-9]+(\.[0-9]+)?[smhd
     exit 1
 fi
 
+# check for valid RESTIC_DATA_SUBSET in the rotate form (rotate:N with N >= 1); other forms are validated by restic
+if [[ "$RESTIC_DATA_SUBSET" == rotate:* ]] && ! [[ "$RESTIC_DATA_SUBSET" =~ ^rotate:[1-9][0-9]*$ ]]; then
+    log "ERROR" "Invalid value for RESTIC_DATA_SUBSET found. The rotate form must be rotate:N with N >= 1 (e.g. rotate:10). Exiting"
+    exit 1
+fi
+
 # check for mandatory input (RESTIC_REPOSITORY, RESTIC_PASSWORD)
 [ -z "$RESTIC_REPOSITORY" ] && { log "ERROR" "RESTIC_REPOSITORY is not set. Exiting."; exit 1; }
 [ -z "$RESTIC_PASSWORD" ] && { log "ERROR" "RESTIC_PASSWORD is not set. Exiting."; exit 1; }
@@ -40,6 +46,7 @@ log "DEBUG" "LOG_LEVEL: ${LOG_LEVEL}"
 log "DEBUG" "LOG_TYPE: ${LOG_TYPE}"
 log "DEBUG" "RESTIC_TAG: ${RESTIC_TAG}"
 log "DEBUG" "RESTIC_DATA_SUBSET: ${RESTIC_DATA_SUBSET}"
+log "DEBUG" "RESTORE_TEST: ${RESTORE_TEST}"
 log "DEBUG" "RESTIC_FORGET_ARGS: ${RESTIC_FORGET_ARGS}"
 log "DEBUG" "RESTIC_JOB_ARGS: ${RESTIC_JOB_ARGS}"
 log "DEBUG" "RESTIC_PRUNE_ARGS: ${RESTIC_PRUNE_ARGS}"

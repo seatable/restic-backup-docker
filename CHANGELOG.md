@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0 (11.09.2026)
+
+- `RESTIC_DATA_SUBSET=rotate:N`: the check reads a different 1/N part of the repository data every calendar week, so all data is verified once every N weeks (instead of a random subset)
+- `RESTIC_DATA_SUBSET=none`: structure check only
+- `RESTORE_TEST=true`: every check restores a random file of the latest snapshot and compares its checksum with the original; a failure is reported like a failed check
+- `post-check.sh` receives 1 if the restore test failed
+
 ## 1.7.2 (11.09.2026)
 
 - warning on container start if `RESTIC_FORGET_ARGS` is set without `--prune` and `PRUNE_CRON` is empty (repository would grow forever)

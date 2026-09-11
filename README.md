@@ -4,6 +4,7 @@ This Docker container automates restic backups and checks at regular intervals. 
 
 - Simple setup and maintenance
 - Define backup, integrity check and prune schedules
+- Integrity check with rotating data verification and a weekly restore test
 - Hanging restic runs are killed and reported, they never block the following backups
 - Supports all restic targets (tested with: Local filesystem, AWS, Backblaze, and rest-server)
 - Custom hook integration
@@ -65,7 +66,7 @@ The Container supports the execution of the following custom hooks (if available
 - /hooks/pre-prune.sh
 - /hooks/post-prune.sh
 
-The post hooks receive the exit code of restic as first argument: `0` success, `3` backup successful but some files could not be read, `124`/`137` aborted by `RESTIC_TIMEOUT`, anything else failed.
+The post hooks receive the exit code of restic as first argument: `0` success, `3` backup successful but some files could not be read, `124`/`137` aborted by `RESTIC_TIMEOUT`, anything else failed. `post-check.sh` receives `1` if the restore test failed.
 
 ### Logs
 
@@ -90,7 +91,8 @@ The container is set up by setting environment variables and volumes.
 | `LOG_TYPE`                  | Define the log output type                      | `stdout` or `file`                                                | `stdout`                         |
 | `TZ`                        | Timezone                                        | `Europe/Berlin`                                                   |                                  |
 | `RESTIC_TAG`                | Tag for backup                                  | `seatable`                                                        | `seatable`                       |
-| `RESTIC_DATA_SUBSET`        | Restic checks only a subset of data             | `1G` or `10%` or `1/10`                                           | `1G`                             |
+| `RESTIC_DATA_SUBSET`        | Data read by the integrity check (see below)    | `1G`, `10%`, `rotate:10` or `none`                                | `1G`                             |
+| `RESTORE_TEST`              | Restore a random file after each check          | `true` or `false`                                                 | `false`                          |
 | `RESTIC_FORGET_ARGS`        | Restic Forget parameters                        | ` --keep-daily 6 --keep-monthly 6`                                |                                  |
 | `RESTIC_JOB_ARGS`           | Restic Job execution parameters                 | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` |                                  |
 | `RESTIC_PRUNE_ARGS`         | Restic Prune parameters                         | ` --max-unused 10%`                                               |                                  |
@@ -113,6 +115,40 @@ The container is set up by setting environment variables and volumes.
 | `B2_ACCOUNT_ID`             | Required only for backblaze backend             |                                                                   |                                  |
 | `B2_ACCOUNT_KEY`            | Required only for backblaze backend             |                                                                   |                                  |
 | `USER_AGENT`                | Define the user agent used with curl            | `restic-backup-docker/<version>`                                  | `restic-backup-docker/<version>` |
+
+### Integrity check and restore test
+
+`CHECK_CRON` (default: weekly) runs `restic check`, which verifies the structure of the repository: index, snapshots and
+that every referenced data block exists. What it reads of the actual data is controlled by `RESTIC_DATA_SUBSET`. restic
+stores every block under its SHA-256 hash and verifies the hash when reading, so a block that is read and passes is
+proven to be intact.
+
+| `RESTIC_DATA_SUBSET` | Data read per check | Coverage |
+| -------------------- | ------------------- | -------- |
+| `1G` (default) or `10%` | a random 1 GB / 10 % of the repository | random – a block may not be read for a long time |
+| `rotate:N` | a fixed 1/N part, a different one every calendar week | **complete – every block is verified once every N weeks** |
+| `none` | nothing, structure only | – |
+
+`rotate:N` is the recommended setting with a weekly `CHECK_CRON`: choose `N` so that `repository size / N` fits your
+weekly bandwidth and traffic budget, e.g. `rotate:4` for a 5 GB repository (all data every month), `rotate:10` for
+200 GB (20 GB per week, all data every 10 weeks), `rotate:52` for 2 TB (all data every year). The part is derived from
+the ISO week number, so it only rotates completely with a weekly schedule. The container logs which part is read:
+`Check reads part 7/10 of the repository data`.
+
+**Restore test**: with `RESTORE_TEST=true`, every check additionally restores one random file (up to 100 MiB) of the
+latest snapshot with `restic restore` to a temporary directory inside the container and compares its SHA-256 with the
+original below `/data`, if that has not changed since the snapshot. This proves that the restore path works end to end.
+The result is logged (`Restore test: restored /data/... from snapshot ..., checksum matches the original`) and is part of
+the healthcheck body and the mail. A failed restore test is reported like a failed check: healthcheck `/fail`, exit code
+1. The restore test is skipped if the check itself failed.
+
+To disable: `RESTORE_TEST=false` (default) turns off the restore test, `RESTIC_DATA_SUBSET=none` turns off data
+reading, `CHECK_CRON=` (empty) turns off the scheduled check altogether.
+
+Neither check proves that the backup contains everything you need to bring your application back. Test that
+periodically by hand: restore the latest snapshot to `/restore`, load the database dump into a fresh database and start
+the application with the restored data. And keep `RESTIC_PASSWORD` in a place that survives the loss of this server –
+without it, the repository is worthless.
 
 ### Retention and prune
 
@@ -240,7 +276,8 @@ services:
       # - LOG_LEVEL=${LOG_LEVEL:-INFO}
       # - LOG_TYPE=${LOG_TYPE:-stdout}
       # - TZ=${TIME_ZONE}
-      # - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G} # Download max 1G of data from backup and check the data integrity
+      # - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-rotate:10} # Verify 1/10 of the repository data per week, everything every 10 weeks
+      # - RESTORE_TEST=${RESTORE_TEST:-true} # Restore a random file after each check and compare it with the original
       # - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
       # - RESTIC_PRUNE_ARGS=${RESTIC_PRUNE_ARGS:-}
       # - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
