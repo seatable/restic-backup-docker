@@ -6,7 +6,9 @@
 # Use this job instead of --prune in RESTIC_FORGET_ARGS. Prune is the most expensive restic
 # operation (downloads and rewrites pack files), it does not need to run with every backup.
 
+# shellcheck source=log.sh
 source /bin/log.sh
+# shellcheck source=functions.sh
 source /bin/functions.sh
 
 start=`date +%s`

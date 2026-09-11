@@ -5,6 +5,7 @@
 
 set -eo pipefail
 
+# shellcheck source=log.sh
 source /bin/log.sh
 
 # Function to check if a command exists in the container

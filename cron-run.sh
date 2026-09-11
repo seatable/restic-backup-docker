@@ -4,6 +4,7 @@
 # Runs the job under a lock, so that backup, check and prune never run at the same time.
 # flock itself skips silently if the lock is held - this wrapper makes the skip visible in the log.
 
+# shellcheck source=log.sh
 source /bin/log.sh
 
 job=$1

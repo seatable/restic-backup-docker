@@ -4,6 +4,7 @@
 # - initializes the repository
 # - creates cronjobs for backup and checks
 
+# shellcheck source=log.sh
 source /bin/log.sh
 
 # check for valid LOG_LEVEL

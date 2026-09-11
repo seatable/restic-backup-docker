@@ -4,7 +4,9 @@
 # - restic backup
 # - restic forget
 
+# shellcheck source=log.sh
 source /bin/log.sh
+# shellcheck source=functions.sh
 source /bin/functions.sh
 
 backup_dir="/data"

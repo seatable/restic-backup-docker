@@ -284,6 +284,18 @@ All commands from the [official restic documentation](https://restic.readthedocs
 
 However, using "FUSE" (Filesystem in Userspace) in a Docker setup can create various problems. Therefore, we've removed everything related to mounting from this container. Please avoid using it.
 
+## Tests
+
+`tests/run.sh` builds the image and runs a test suite against it: success paths with the real restic and a local
+repository, failure paths (hanging restic, timeouts, failing hooks, unreachable healthcheck server, lock conflicts)
+with a fake restic and a mock healthcheck server. It runs in GitHub Actions on every push and can be run locally,
+requirements are docker, python3 and curl:
+
+```bash
+tests/run.sh                                  # build and test
+IMAGE=seatable/restic-backup:1.7.0 tests/run.sh   # test an existing image
+```
+
 ## Two backup targets
 
 Sometimes you might want to backup to two different repositories. In this case it is no problem to run to backup containers in parallel. The volume configuration can be the same, but it is advised that you run the backups to different times. Therefore choose different values for `BACKUP_CRON` and `CHECK_CRON`.

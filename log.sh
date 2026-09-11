@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Function to log messages
 # $LOG_LEVEL is the requested log level of the container, defined by the user in the ENV_VARIABLES
 # $LEVEL is the level of the log message.
@@ -36,7 +37,8 @@ set_default USER_AGENT "restic-backup-docker/${VERSION}"
 log() {
     local LEVEL="$1"
     local MESSAGE="$2"
-    local TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+    local TIMESTAMP
+    TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
     local LOG_FILE="/var/log/restic/backup.log"
 
     # always output to stdout depending of the LEVEL of the message.

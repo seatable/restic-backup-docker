@@ -3,7 +3,9 @@
 # Checks data integrity (execute manually or by CHECK_CRON schedule)
 # - restic check
 
+# shellcheck source=log.sh
 source /bin/log.sh
+# shellcheck source=functions.sh
 source /bin/functions.sh
 
 start=`date +%s`

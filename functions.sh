@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared functions for the backup, check and prune jobs.
 # Expects log.sh to be sourced before.
 
