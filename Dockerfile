@@ -67,6 +67,7 @@ COPY entry.sh /bin/entry.sh
 COPY log.sh /bin/log.sh
 COPY pre-default.sh /bin/pre-default.sh
 COPY cron-run.sh /bin/cron-run
+COPY version /version
 RUN chmod +x /bin/backup /bin/check /bin/entry.sh /bin/log.sh /bin/pre-default.sh /bin/cron-run
 
 ENTRYPOINT ["/bin/entry.sh"]

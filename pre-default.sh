@@ -26,6 +26,8 @@ if [ "${DATABASE_DUMP}" = "true" ] || [ "${SEATABLE_DATABASE_DUMP}" = "true" ]; 
         exit 1
     fi
 
+    # The password is passed via MYSQL_PWD (not visible in the process list).
+    # --single-transaction dumps InnoDB tables consistently without locking them.
     log "INFO" "Dump the database (mariadb or mysql)"
     mkdir -p /data/database-dumps
     if [ -n "${DATABASE_LIST}" ]; then
@@ -33,11 +35,11 @@ if [ "${DATABASE_DUMP}" = "true" ] || [ "${SEATABLE_DATABASE_DUMP}" = "true" ]; 
         IFS=',' read -r -a DATABASE_ARRAY <<< "${DATABASE_LIST}"
         for DATABASE in "${DATABASE_ARRAY[@]}"; do
             log "DEBUG" "Let's dump the database ${DATABASE}"
-            /usr/local/bin/docker exec ${DATABASE_HOST} ${DUMP_COMMAND} -u${DATABASE_USER} -p${DATABASE_PASSWORD} --opt ${DATABASE} > /data/database-dumps/${DATABASE}.dump
+            /usr/local/bin/docker exec -e MYSQL_PWD="${DATABASE_PASSWORD}" ${DATABASE_HOST} ${DUMP_COMMAND} -u${DATABASE_USER} --opt --single-transaction ${DATABASE} > /data/database-dumps/${DATABASE}.dump
         done
     else
         log "DEBUG" "Let's dump all databases"
-        /usr/local/bin/docker exec ${DATABASE_HOST} ${DUMP_COMMAND} -u${DATABASE_USER} -p${DATABASE_PASSWORD} --all-databases > /data/database-dumps/all.dump
+        /usr/local/bin/docker exec -e MYSQL_PWD="${DATABASE_PASSWORD}" ${DATABASE_HOST} ${DUMP_COMMAND} -u${DATABASE_USER} --opt --single-transaction --all-databases > /data/database-dumps/all.dump
     fi
 
     # compress the dump files

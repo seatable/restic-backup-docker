@@ -14,6 +14,10 @@
 - `procps` added to the image (`ps`, `kill`) to debug hanging processes
 - fix: WARNING log messages were labeled as INFO
 - README: recommend S3 endpoint for Backblaze B2
+- database dump uses `--single-transaction` (consistent InnoDB dump without locking the tables)
+- database password is passed to the dump command via `MYSQL_PWD` instead of the command line (was visible in `ps`)
+- version is read from the `version` file (written by the build pipeline) instead of being hardcoded in `USER_AGENT`; version is logged on container start
+- README: hint on `--pack-size` for large repositories
 
 ## 1.6.1 (2.9.2025)
 

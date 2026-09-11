@@ -27,7 +27,9 @@ set_default DATABASE_DUMP_COMPRESSION "false"
 set_default SEATABLE_BIGDATA_DUMP "false"
 set_default SEATABLE_BIGDATA_HOST "seatable-server"
 set_default HEALTHCHECK_URL ""
-set_default USER_AGENT "restic-backup-docker/1.7.0"
+# the version file is written by the build pipeline (git tag) and copied into the image
+set_default VERSION "$(cat /version 2>/dev/null || echo unknown)"
+set_default USER_AGENT "restic-backup-docker/${VERSION}"
 
 log() {
     local LEVEL="$1"

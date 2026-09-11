@@ -23,7 +23,7 @@ fi
 [ -z "$RESTIC_REPOSITORY" ] && { log "ERROR" "RESTIC_REPOSITORY is not set. Exiting."; exit 1; }
 [ -z "$RESTIC_PASSWORD" ] && { log "ERROR" "RESTIC_PASSWORD is not set. Exiting."; exit 1; }
 
-log "INFO" "Starting the restic-backup container ..."
+log "INFO" "Starting the restic-backup container (version ${VERSION}) ..."
 
 # make environment variables and path available to cron
 env >> /etc/environment

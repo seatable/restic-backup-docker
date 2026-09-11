@@ -130,6 +130,18 @@ AWS_SECRET_ACCESS_KEY=<applicationKey>
 
 The region is part of the S3 endpoint shown in the bucket details of your Backblaze account (e.g. `eu-central-003`).
 
+### Large repositories: pack size
+
+restic stores data in pack files of 16 MiB by default. For repositories with hundreds of GB on S3 or Backblaze B2 this
+means a very large number of files and API requests (which Backblaze bills per transaction). A larger pack size reduces
+both. Add it to `RESTIC_JOB_ARGS`, it only affects newly written packs:
+
+```bash
+RESTIC_JOB_ARGS=--pack-size 64 --exclude-if-present .exclude_from_backup
+```
+
+See the [restic documentation](https://restic.readthedocs.io/en/stable/047_tuning.html#pack-size) for details and limits.
+
 ### Mail notification
 
 Mail notification is optional. If specified, the content of `/var/log/restic/lastrun.log` is sent via mail after each backup and data integrity check using an external SMTP. To have maximum flexibility, you have to provide a msmtp configuration file with the mail/smtp parameters on your own. Have a look at the [msmtp manpage](https://wiki.debian.org/msmtp) for further information.
