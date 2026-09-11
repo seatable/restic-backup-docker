@@ -1,87 +1,20 @@
 #!/usr/bin/env bash
 #
-# Backup script to save backup to repository and forgets old snapshots (execute manually or by CHECK_CRON schedule)
+# Backup script to save backup to repository and forgets old snapshots (execute manually or by BACKUP_CRON schedule)
 # - restic backup
 # - restic forget
 
 source /bin/log.sh
+source /bin/functions.sh
 
-mkdir -p /var/log/restic
-lastLogfile="/var/log/restic/lastrun.log"
 backup_dir="/data"
 start=`date +%s`
-
-healthcheck() {
-    suffix=$1
-    if [ -n "$HEALTHCHECK_URL" ]; then
-        log "INFO" "Reporting healthcheck $suffix ..."
-        [[ ${1} == "/start" ]] && m="" || m=$(cat ${lastLogfile} | tail -n 300)
-        # --max-time makes sure an unresponsive healthcheck server can never block the backup
-        curl -fSsL --retry 3 --max-time 30 -X POST \
-            --user-agent ${USER_AGENT} \
-            --data-raw "$m" "${HEALTHCHECK_URL}${suffix}"
-        if [ $? != 0 ]; then
-            # A failed ping must never abort the backup itself. Just log it and go on.
-            log "WARNING" "Reporting healthcheck $suffix failed (HEALTHCHECK_URL wrong or unreachable). Continuing anyway."
-        fi
-    else
-        log "DEBUG" "No HEALTHCHECK_URL provided. Skipping healthcheck."
-    fi
-}
-
-# Run a restic command, limited by RESTIC_TIMEOUT (0 disables the limit).
-# Exit code is the one of restic, or 124 (SIGTERM) / 137 (SIGKILL) if the timeout was hit.
-run_restic() {
-    if [ -n "${RESTIC_TIMEOUT}" ]; then
-        timeout -k 60 "${RESTIC_TIMEOUT}" restic "$@"
-    else
-        restic "$@"
-    fi
-}
-
-# Remove the repository lock left behind by a failed or killed restic process.
-# Always limited, a hanging unlock must not block the next scheduled run.
-unlock() {
-    timeout -k 30 10m restic unlock >> $lastLogfile 2>&1
-}
-
-# Log an error and add it to lastrun.log, so it is part of healthcheck and mail reports.
-report_error() {
-    log "ERROR" "$1"
-    echo "ERROR: $1" >> $lastLogfile
-}
-
-# Log the failure of a restic command. Timeouts are reported explicitly.
-report_restic_error() {
-    cmd=$1
-    rc=$2
-    if [[ $rc == 124 || $rc == 137 ]]; then
-        report_error "restic ${cmd} aborted by RESTIC_TIMEOUT (${RESTIC_TIMEOUT}): process was hanging and got killed, repository lock will be removed."
-    else
-        report_error "restic ${cmd} failed with status ${rc}"
-    fi
-}
-
-send_mail() {
-    if [ -n "${MSMTP_ARGS}" ]; then
-        log "INFO" "Executing mail command"
-        echo -e "Subject: Restic-Backup \n\n$(cat ${lastLogfile})" | msmtp ${MSMTP_ARGS}
-        ms=$?
-        if [[ $ms == 0 ]]; then
-            log "INFO" "Mail notification successfully sent."
-        else
-            log "ERROR" "Sending mail notification FAILED."
-        fi
-    else
-        log "DEBUG" "MSMTP_ARGS not defined. Therefore no mail notification."
-    fi
-}
 
 # Abort the backup run before restic was started: report via healthcheck and mail, then exit.
 abort() {
     report_error "$1"
     healthcheck /fail
-    send_mail
+    send_mail "Restic-Backup"
     exit 1
 }
 
@@ -123,8 +56,15 @@ tree -a -P *.gz -P *.dump -P .exclude_from_backup -L 3 ${backup_dir} >> $lastLog
 log "INFO" "Start the restic backup"
 run_restic backup ${backup_dir} ${RESTIC_JOB_ARGS} --tag=${RESTIC_TAG} >> $lastLogfile 2>&1
 backupRC=$?
+# backupOK: the snapshot exists, forget may run and success is reported
+backupOK=0
 if [[ $backupRC == 0 ]]; then
     log "INFO" "Backup Successful"
+    backupOK=1
+elif [[ $backupRC == 3 ]]; then
+    # restic exit code 3: snapshot was created, but some source files could not be read
+    report_warning "Backup finished with warnings (status 3): snapshot was created, but some files could not be read. See lastrun.log for details."
+    backupOK=1
 else
     report_restic_error "backup" $backupRC
     unlock
@@ -132,7 +72,7 @@ else
 fi
 
 forgetRC=0
-if [[ $backupRC == 0 ]] && [ -n "${RESTIC_FORGET_ARGS}" ]; then
+if [[ $backupOK == 1 ]] && [ -n "${RESTIC_FORGET_ARGS}" ]; then
     log "INFO" "Forget old snapshots based on RESTIC_FORGET_ARGS = ${RESTIC_FORGET_ARGS}"
     run_restic forget ${RESTIC_FORGET_ARGS} >> $lastLogfile 2>&1
     forgetRC=$?
@@ -146,7 +86,7 @@ if [[ $backupRC == 0 ]] && [ -n "${RESTIC_FORGET_ARGS}" ]; then
 fi
 
 # success is only reported after backup AND forget are done
-if [[ $backupRC == 0 && $forgetRC == 0 ]]; then
+if [[ $backupOK == 1 && $forgetRC == 0 ]]; then
     healthcheck /0
 fi
 
@@ -154,9 +94,9 @@ end=`date +%s`
 log "INFO" "Finished Backup after $((end-start)) seconds"
 echo "Finished Backup at $(date +"%Y-%m-%d %H:%M:%S") after $((end-start)) seconds" >> $lastLogfile
 
-send_mail
+send_mail "Restic-Backup"
 
-# /hooks/post-backup.sh
+# /hooks/post-backup.sh (receives the restic exit code: 0 ok, 3 ok with unreadable files, 124/137 timeout, other = failed)
 if [ -f "/hooks/post-backup.sh" ]; then
     log "INFO" "Starting post-backup script"
     /hooks/post-backup.sh $backupRC
@@ -169,6 +109,6 @@ else
 fi
 
 # exit with the restic status, so that a manual run (docker exec ... backup) reports the failure
-[[ $backupRC != 0 ]] && exit $backupRC
+[[ $backupOK == 0 ]] && exit $backupRC
 [[ $forgetRC != 0 ]] && exit $forgetRC
 exit 0

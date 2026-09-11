@@ -41,14 +41,17 @@ docker exec -it restic-backup restic version
 docker exec -it restic-backup restic stats
 ```
 
-Additionally, there are two simple commands for backup and checking consistency. These commands are also executed according to the CRON schedule.
+Additionally, there are three simple commands for backup, checking consistency and pruning. These commands are also executed according to the CRON schedule.
 
-To manually perform a backup or check consistency, independent of the CRON, run:
+To manually perform a backup, check or prune, independent of the CRON, run:
 
 ```bash
 docker exec -it restic-backup backup
 docker exec -it restic-backup check
+docker exec -it restic-backup prune
 ```
+
+The commands exit with the status of restic (0 = success), so they can be used in your own scripts.
 
 ### Hooks
 
@@ -58,6 +61,10 @@ The Container supports the execution of the following custom hooks (if available
 - /hooks/post-backup.sh
 - /hooks/pre-check.sh
 - /hooks/post-check.sh
+- /hooks/pre-prune.sh
+- /hooks/post-prune.sh
+
+The post hooks receive the exit code of restic as first argument: `0` success, `3` backup successful but some files could not be read, `124`/`137` aborted by `RESTIC_TIMEOUT`, anything else failed.
 
 ### Logs
 
@@ -77,13 +84,15 @@ The container is set up by setting environment variables and volumes.
 | `RESTIC_PASSWORD`           | Encryption password                             | `topsecret`                                                       | _required_                       |
 | `BACKUP_CRON`               | Execution schedule for the backup               | `20 2 * * *` (Do not enclose the schedule in quotes)              | `20 2 * * *`                     |
 | `CHECK_CRON`                | Execution schedule integrity check              | `40 3 * * 6` (Do not enclose the schedule in quotes)              | `40 3 * * 6`                     |
+| `PRUNE_CRON`                | Execution schedule for prune (see below)        | `40 3 * * 0` (empty = no separate prune job)                      |                                  |
 | `LOG_LEVEL`                 | Define log level                                | `DEBUG`, `INFO`, `WARNING` or `ERROR`.                            | `INFO`                           |
 | `LOG_TYPE`                  | Define the log output type                      | `stdout` or `file`                                                | `stdout`                         |
 | `TZ`                        | Timezone                                        | `Europe/Berlin`                                                   |                                  |
 | `RESTIC_TAG`                | Tag for backup                                  | `seatable`                                                        | `seatable`                       |
 | `RESTIC_DATA_SUBSET`        | Restic checks only a subset of data             | `1G` or `10%` or `1/10`                                           | `1G`                             |
-| `RESTIC_FORGET_ARGS`        | Restic Forget parameters                        | ` --prune --keep-daily 6 --keep-monthly 6`                        |                                  |
+| `RESTIC_FORGET_ARGS`        | Restic Forget parameters                        | ` --keep-daily 6 --keep-monthly 6`                                |                                  |
 | `RESTIC_JOB_ARGS`           | Restic Job execution parameters                 | ` --exclude=/data/logs --exclude-if-present .exclude_from_backup` |                                  |
+| `RESTIC_PRUNE_ARGS`         | Restic Prune parameters                         | ` --max-unused 10%`                                               |                                  |
 | `RESTIC_SKIP_INIT`          | Skip restic initialization                      | `true` or `false`                                                 | `false`                          |
 | `RESTIC_TIMEOUT`            | Max. runtime per restic command (see below)     | `48h`, `90m` or `0` to disable                                    | `48h`                            |
 | `SEATABLE_DATABASE_DUMP`    | Enable mysql/mariadb database dump (DEPRECATED) | `true` or `false`                                                 | `false`                          |
@@ -103,6 +112,19 @@ The container is set up by setting environment variables and volumes.
 | `B2_ACCOUNT_ID`             | Required only for backblaze backend             |                                                                   |                                  |
 | `B2_ACCOUNT_KEY`            | Required only for backblaze backend             |                                                                   |                                  |
 | `USER_AGENT`                | Define the user agent used with curl            | `restic-backup-docker/<version>`                                  | `restic-backup-docker/<version>` |
+
+### Retention and prune
+
+`restic forget` removes old snapshots according to `RESTIC_FORGET_ARGS` after every backup. The data of the removed
+snapshots is only deleted from the repository by `restic prune`. Prune is the most expensive restic operation: it
+downloads, rewrites and uploads pack files and makes many API requests. There are two ways to run it:
+
+- **Separate prune job (recommended)**: set `PRUNE_CRON` to a weekly schedule and leave `--prune` out of
+  `RESTIC_FORGET_ARGS`. Optional prune parameters go to `RESTIC_PRUNE_ARGS`.
+- **With every backup**: add `--prune` to `RESTIC_FORGET_ARGS` and leave `PRUNE_CRON` empty.
+
+Backup, check and prune never run at the same time. If a job is scheduled while another one is still running, it is
+skipped and an error is logged. Choose schedules that do not overlap.
 
 ### Timeout for hanging restic commands
 
@@ -201,12 +223,14 @@ services:
       - RESTIC_PASSWORD=${RESTIC_PASSWORD:?Variable is not set or empty}
       # - RESTIC_TAG=${SEATABLE_SERVER_HOSTNAME:-seatable}
       # - BACKUP_CRON=${BACKUP_CRON:-15 2 * * *} # Start backup always at 2:15 am.
-      # - CHECK_CRON=${CHECK_CRON:-45 3 * * 6} # Start check every sunday at 3:45am
+      # - CHECK_CRON=${CHECK_CRON:-45 3 * * 6} # Start check every saturday at 3:45am
+      # - PRUNE_CRON=${PRUNE_CRON:-45 3 * * 0} # Start prune every sunday at 3:45am
       # - LOG_LEVEL=${LOG_LEVEL:-INFO}
       # - LOG_TYPE=${LOG_TYPE:-stdout}
       # - TZ=${TIME_ZONE}
       # - RESTIC_DATA_SUBSET=${RESTIC_DATA_SUBSET:-1G} # Download max 1G of data from backup and check the data integrity
-      # - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --prune --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
+      # - RESTIC_FORGET_ARGS=${RESTIC_FORGET_ARGS:- --keep-daily 6 --keep-weekly 4 --keep-monthly 6}
+      # - RESTIC_PRUNE_ARGS=${RESTIC_PRUNE_ARGS:-}
       # - RESTIC_JOB_ARGS=${RESTIC_JOB_ARGS:- --exclude=/data/seatable-server/seatable/logs --exclude=/data/seatable-server/seatable/db-data --exclude-if-present .exclude_from_backup}
       # - RESTIC_SKIP_INIT=${RESTIC_SKIP_INIT}
       # - RESTIC_TIMEOUT=${RESTIC_TIMEOUT:-48h} # Max. runtime per restic command, 0 disables

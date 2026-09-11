@@ -34,12 +34,14 @@ log "DEBUG" "RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}"
 log "DEBUG" "RESTIC_PASSWORD: ${RESTIC_PASSWORD}"
 log "DEBUG" "BACKUP_CRON: ${BACKUP_CRON}"
 log "DEBUG" "CHECK_CRON: ${CHECK_CRON}"
+log "DEBUG" "PRUNE_CRON: ${PRUNE_CRON}"
 log "DEBUG" "LOG_LEVEL: ${LOG_LEVEL}"
 log "DEBUG" "LOG_TYPE: ${LOG_TYPE}"
 log "DEBUG" "RESTIC_TAG: ${RESTIC_TAG}"
 log "DEBUG" "RESTIC_DATA_SUBSET: ${RESTIC_DATA_SUBSET}"
 log "DEBUG" "RESTIC_FORGET_ARGS: ${RESTIC_FORGET_ARGS}"
 log "DEBUG" "RESTIC_JOB_ARGS: ${RESTIC_JOB_ARGS}"
+log "DEBUG" "RESTIC_PRUNE_ARGS: ${RESTIC_PRUNE_ARGS}"
 log "DEBUG" "RESTIC_SKIP_INIT: ${RESTIC_SKIP_INIT}"
 log "DEBUG" "RESTIC_TIMEOUT: ${RESTIC_TIMEOUT}"
 log "DEBUG" "DATABASE_DUMP: ${DATABASE_DUMP}"
@@ -83,6 +85,14 @@ if [ -n "${CHECK_CRON}" ]; then
     echo "${CHECK_CRON} root /bin/cron-run check >/proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
 else
     log "DEBUG" "NO CHECK_CRON defined"
+fi
+
+# If PRUNE_CRON is set, a separate prune job is scheduled (use without --prune in RESTIC_FORGET_ARGS)
+if [ -n "${PRUNE_CRON}" ]; then
+    log "INFO" "Setup prune cron job with cron expression PRUNE_CRON: ${PRUNE_CRON}"
+    echo "${PRUNE_CRON} root /bin/cron-run prune >/proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
+else
+    log "DEBUG" "NO PRUNE_CRON defined"
 fi
 echo '
 # An empty line is required at the end of this file for a valid cron file.

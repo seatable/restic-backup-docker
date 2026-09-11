@@ -11,12 +11,14 @@ set_default() {
 # set default values for all other environment variables
 set_default BACKUP_CRON "20 2 * * *"
 set_default CHECK_CRON "40 3 * * 6"
+set_default PRUNE_CRON ""
 set_default LOG_LEVEL "INFO"
 set_default LOG_TYPE "stdout"
 set_default RESTIC_TAG "seatable"
 set_default RESTIC_DATA_SUBSET "1G"
 set_default RESTIC_FORGET_ARGS ""
 set_default RESTIC_JOB_ARGS ""
+set_default RESTIC_PRUNE_ARGS ""
 set_default RESTIC_SKIP_INIT false
 set_default RESTIC_TIMEOUT "48h"
 set_default DATABASE_DUMP false

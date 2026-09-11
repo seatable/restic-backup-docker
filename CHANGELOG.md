@@ -18,6 +18,9 @@
 - database password is passed to the dump command via `MYSQL_PWD` instead of the command line (was visible in `ps`)
 - version is read from the `version` file (written by the build pipeline) instead of being hardcoded in `USER_AGENT`; version is logged on container start
 - README: hint on `--pack-size` for large repositories
+- new job `prune` with `PRUNE_CRON` and `RESTIC_PRUNE_ARGS`: run `restic prune` on its own schedule (e.g. weekly) instead of `--prune` with every backup. Hooks `pre-prune.sh` / `post-prune.sh`.
+- restic backup exit code 3 (snapshot created, some files unreadable) is treated as warning: forget runs, success is reported, the warning is part of log, healthcheck body and mail
+- shared functions moved to `functions.sh`
 
 ## 1.6.1 (2.9.2025)
 

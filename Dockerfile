@@ -63,12 +63,14 @@ VOLUME /data
 
 COPY backup.sh /bin/backup
 COPY check.sh /bin/check
+COPY prune.sh /bin/prune
+COPY functions.sh /bin/functions.sh
 COPY entry.sh /bin/entry.sh
 COPY log.sh /bin/log.sh
 COPY pre-default.sh /bin/pre-default.sh
 COPY cron-run.sh /bin/cron-run
 COPY version /version
-RUN chmod +x /bin/backup /bin/check /bin/entry.sh /bin/log.sh /bin/pre-default.sh /bin/cron-run
+RUN chmod +x /bin/backup /bin/check /bin/prune /bin/entry.sh /bin/log.sh /bin/functions.sh /bin/pre-default.sh /bin/cron-run
 
 ENTRYPOINT ["/bin/entry.sh"]
 CMD ["cron", "-f", "-L", "2"]

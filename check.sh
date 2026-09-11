@@ -4,50 +4,9 @@
 # - restic check
 
 source /bin/log.sh
+source /bin/functions.sh
 
-mkdir -p /var/log/restic
-lastLogfile="/var/log/restic/lastrun.log"
 start=`date +%s`
-
-healthcheck() {
-    suffix=$1
-    if [ -n "$HEALTHCHECK_URL" ]; then
-        log "INFO" "Reporting healthcheck $suffix ..."
-        [[ ${1} == "/start" ]] && m="" || m=$(cat ${lastLogfile} | tail -n 300)
-        # --max-time makes sure an unresponsive healthcheck server can never block the check
-        curl -fSsL --retry 3 --max-time 30 -X POST \
-            --user-agent ${USER_AGENT} \
-            --data-raw "$m" "${HEALTHCHECK_URL}${suffix}"
-        if [ $? != 0 ]; then
-            # A failed ping must never abort the check itself. Just log it and go on.
-            log "WARNING" "Reporting healthcheck $suffix failed (HEALTHCHECK_URL wrong or unreachable). Continuing anyway."
-        fi
-    else
-        log "DEBUG" "No HEALTHCHECK_URL provided. Skipping healthcheck."
-    fi
-}
-
-# Run a restic command, limited by RESTIC_TIMEOUT (0 disables the limit).
-# Exit code is the one of restic, or 124 (SIGTERM) / 137 (SIGKILL) if the timeout was hit.
-run_restic() {
-    if [ -n "${RESTIC_TIMEOUT}" ]; then
-        timeout -k 60 "${RESTIC_TIMEOUT}" restic "$@"
-    else
-        restic "$@"
-    fi
-}
-
-# Remove the repository lock left behind by a failed or killed restic process.
-# Always limited, a hanging unlock must not block the next scheduled run.
-unlock() {
-    timeout -k 30 10m restic unlock >> $lastLogfile 2>&1
-}
-
-# Log an error and add it to lastrun.log, so it is part of healthcheck and mail reports.
-report_error() {
-    log "ERROR" "$1"
-    echo "ERROR: $1" >> $lastLogfile
-}
 
 # /hooks/pre-check.sh
 if [ -f "/hooks/pre-check.sh" ]; then
@@ -60,10 +19,8 @@ fi
 
 log "INFO" "Starting Check"
 echo "Starting Check at $(date +"%Y-%m-%d %H:%M:%S")" > $lastLogfile
-log "DEBUG" "BACKUP_CRON: ${BACKUP_CRON}"
-log "DEBUG" "RESTIC_TAG: ${RESTIC_TAG}"
-log "DEBUG" "RESTIC_FORGET_ARGS: ${RESTIC_FORGET_ARGS}"
-log "DEBUG" "RESTIC_JOB_ARGS: ${RESTIC_JOB_ARGS}"
+log "DEBUG" "CHECK_CRON: ${CHECK_CRON}"
+log "DEBUG" "RESTIC_DATA_SUBSET: ${RESTIC_DATA_SUBSET}"
 log "DEBUG" "RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}"
 log "DEBUG" "RESTIC_TIMEOUT: ${RESTIC_TIMEOUT}"
 
@@ -71,7 +28,6 @@ log "DEBUG" "Healthcheck start"
 healthcheck /start
 
 
-# Do not save full check log to logfile but to check-last.log
 if [ -n "${RESTIC_DATA_SUBSET}" ]; then
     run_restic check --read-data-subset=${RESTIC_DATA_SUBSET} >> $lastLogfile 2>&1
     checkRC=$?
@@ -84,11 +40,7 @@ if [[ $checkRC == 0 ]]; then
     log "INFO" "Check finished Successful"
     healthcheck /0
 else
-    if [[ $checkRC == 124 || $checkRC == 137 ]]; then
-        report_error "restic check aborted by RESTIC_TIMEOUT (${RESTIC_TIMEOUT}): process was hanging and got killed, repository lock will be removed."
-    else
-        report_error "restic check failed with status ${checkRC}"
-    fi
+    report_restic_error "check" $checkRC
     unlock
     healthcheck /fail
 fi
@@ -97,18 +49,7 @@ end=`date +%s`
 log "INFO" "Finished Check after $((end-start)) seconds"
 echo "Finished Check at $(date +"%Y-%m-%d %H:%M:%S") after $((end-start)) seconds" >> $lastLogfile
 
-if [ -n "${MSMTP_ARGS}" ]; then
-    log "INFO" "Executing mail command"
-    echo -e "Subject: Restic-Check \n\n$(cat ${lastLogfile})" | msmtp ${MSMTP_ARGS}
-    ms=$?
-    if [[ $ms == 0 ]]; then
-        log "INFO" "Mail notification successfully sent."
-    else
-        log "ERROR" "Sending mail notification FAILED."
-    fi
-else
-    log "DEBUG" "MSMTP_ARGS not defined. Therefore no mail notification"
-fi
+send_mail "Restic-Check"
 
 # /hooks/post-check.sh
 if [ -f "/hooks/post-check.sh" ]; then
