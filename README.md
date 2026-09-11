@@ -2,8 +2,9 @@
 
 This Docker container automates restic backups and checks at regular intervals. It offers:
 
-- Simple setup and maintanance
-- Define backup and integrity check schedules
+- Simple setup and maintenance
+- Define backup, integrity check and prune schedules
+- Hanging restic runs are killed and reported, they never block the following backups
 - Supports all restic targets (tested with: Local filesystem, AWS, Backblaze, and rest-server)
 - Custom hook integration
 - Partial and full restore
@@ -164,9 +165,17 @@ RESTIC_JOB_ARGS=--pack-size 64 --exclude-if-present .exclude_from_backup
 
 See the [restic documentation](https://restic.readthedocs.io/en/stable/047_tuning.html#pack-size) for details and limits.
 
+### Healthcheck
+
+If `HEALTHCHECK_URL` is set (e.g. a check at [healthchecks.io](https://healthchecks.io/)), every job reports its
+progress: `/start` when it begins, `/0` when backup **and** forget (or check, or prune) finished successfully, `/fail`
+otherwise. The body of `/0` and `/fail` contains the last 300 lines of `lastrun.log`. Configure the grace time of the
+check to be longer than your longest run: a job that sends `/start` but no result within the grace time is reported as
+down, even if the container itself does not respond anymore. An unreachable healthcheck server never aborts a job.
+
 ### Mail notification
 
-Mail notification is optional. If specified, the content of `/var/log/restic/lastrun.log` is sent via mail after each backup and data integrity check using an external SMTP. To have maximum flexibility, you have to provide a msmtp configuration file with the mail/smtp parameters on your own. Have a look at the [msmtp manpage](https://wiki.debian.org/msmtp) for further information.
+Mail notification is optional. If specified, the content of `/var/log/restic/lastrun.log` is sent via mail after each backup, data integrity check and prune using an external SMTP. A failed run is reported as well. To have maximum flexibility, you have to provide a msmtp configuration file with the mail/smtp parameters on your own. Have a look at the [msmtp manpage](https://wiki.debian.org/msmtp) for further information.
 
 Here is an example of `MSMTP_ARGS`, to specify the recipient of the notification.
 
@@ -298,7 +307,7 @@ IMAGE=seatable/restic-backup:1.7.0 tests/run.sh   # test an existing image
 
 ## Two backup targets
 
-Sometimes you might want to backup to two different repositories. In this case it is no problem to run to backup containers in parallel. The volume configuration can be the same, but it is advised that you run the backups to different times. Therefore choose different values for `BACKUP_CRON` and `CHECK_CRON`.
+Sometimes you might want to backup to two different repositories. In this case it is no problem to run to backup containers in parallel. The volume configuration can be the same, but it is advised that you run the backups to different times. Therefore choose different values for `BACKUP_CRON`, `CHECK_CRON` and `PRUNE_CRON`.
 
 ## Using rclone
 
