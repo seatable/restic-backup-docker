@@ -235,6 +235,19 @@ test_entry_crontab_and_version() {
     [ $ok = 0 ] || show_output
 }
 
+test_entry_warns_forget_without_prune() {
+    local common=(--rm -e RESTIC_REPOSITORY=/local -e RESTIC_PASSWORD=test -e RESTIC_FORGET_ARGS="--keep-last 3")
+    local warning="RESTIC_FORGET_ARGS is set without --prune and PRUNE_CRON is empty"
+    local ok=0
+    OUT=$(timeout 30 docker run --name rbt-entry-noprune "${common[@]}" "$IMAGE" true 2>&1)
+    assert_contains "no PRUNE_CRON, no --prune" "$OUT" "[WARNING] $warning" || ok=1
+    OUT=$(timeout 30 docker run --name rbt-entry-prunecron "${common[@]}" -e PRUNE_CRON="45 3 * * 0" "$IMAGE" true 2>&1)
+    assert_not_contains "with PRUNE_CRON" "$OUT" "$warning" || ok=1
+    OUT=$(timeout 30 docker run --name rbt-entry-pruneflag "${common[@]}" -e RESTIC_FORGET_ARGS="--prune --keep-last 3" "$IMAGE" true 2>&1)
+    assert_not_contains "with --prune" "$OUT" "$warning" || ok=1
+    [ $ok = 0 ] || show_output
+}
+
 test_cron_runs_backup_with_environment() {
     mkdir -p "$TMP/repo/cron"
     docker run -d --name rbt-cron --network host --init -v "$TMP/data:/data:ro" -v "$TMP/repo/cron:/local" \
@@ -306,6 +319,7 @@ test_case "backup exit code 3 is a warning, forget runs, /0 is sent"    test_bac
 test_case "failed backup skips forget, sends /fail, exits non-zero"     test_backup_failure_exit_code
 test_case "entry.sh rejects an invalid RESTIC_TIMEOUT"                  test_entry_rejects_invalid_timeout
 test_case "entry.sh logs the version and writes the crontab"            test_entry_crontab_and_version
+test_case "entry.sh warns when forget runs without any prune"           test_entry_warns_forget_without_prune
 test_case "cron executes the backup with the container environment"     test_cron_runs_backup_with_environment
 test_case "database dump via docker exec"                               test_database_dump
 

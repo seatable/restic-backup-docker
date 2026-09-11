@@ -124,6 +124,9 @@ downloads, rewrites and uploads pack files and makes many API requests. There ar
   `RESTIC_FORGET_ARGS`. Optional prune parameters go to `RESTIC_PRUNE_ARGS`.
 - **With every backup**: add `--prune` to `RESTIC_FORGET_ARGS` and leave `PRUNE_CRON` empty.
 
+Without one of the two, forgotten snapshots are never removed from the repository and it grows forever. The container
+logs a warning on start if `RESTIC_FORGET_ARGS` is set without `--prune` and `PRUNE_CRON` is empty.
+
 Backup, check and prune never run at the same time. If a job is scheduled while another one is still running, it is
 skipped and an error is logged. Choose schedules that do not overlap.
 

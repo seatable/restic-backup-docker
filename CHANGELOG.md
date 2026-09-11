@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.2 (11.09.2026)
+
+- warning on container start if `RESTIC_FORGET_ARGS` is set without `--prune` and `PRUNE_CRON` is empty (repository would grow forever)
+
 ## 1.7.1 (11.09.2026)
 
 - updated software versions: restic 0.19.1, rclone v1.75.1, docker 29.8.0, debian 12.15-slim

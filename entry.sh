@@ -94,6 +94,10 @@ if [ -n "${PRUNE_CRON}" ]; then
     echo "${PRUNE_CRON} root /bin/cron-run prune >/proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
 else
     log "DEBUG" "NO PRUNE_CRON defined"
+    # forget without prune only removes snapshot references, the data stays in the repository forever
+    if [ -n "${RESTIC_FORGET_ARGS}" ] && [[ "${RESTIC_FORGET_ARGS}" != *"--prune"* ]]; then
+        log "WARNING" "RESTIC_FORGET_ARGS is set without --prune and PRUNE_CRON is empty: forgotten snapshots are never removed from the repository and it will grow. Set PRUNE_CRON or add --prune to RESTIC_FORGET_ARGS."
+    fi
 fi
 echo '
 # An empty line is required at the end of this file for a valid cron file.
