@@ -301,6 +301,20 @@ test_entry_warns_forget_without_prune() {
     [ $ok = 0 ] || show_output
 }
 
+test_entry_warns_container_id_hostname() {
+    local common=(--rm -e RESTIC_REPOSITORY=/local -e RESTIC_PASSWORD=test)
+    local warning="looks like a docker container ID"
+    local ok=0
+    OUT=$(timeout 30 docker run --name rbt-entry-nohostname "${common[@]}" "$IMAGE" true 2>&1)
+    assert_contains "no hostname" "$OUT" "[WARNING] The hostname" || ok=1
+    assert_contains "no hostname" "$OUT" "$warning" || ok=1
+    OUT=$(timeout 30 docker run --name rbt-entry-hostname --hostname restic-backup "${common[@]}" "$IMAGE" true 2>&1)
+    assert_not_contains "with hostname" "$OUT" "$warning" || ok=1
+    OUT=$(timeout 30 docker run --name rbt-entry-hostarg "${common[@]}" -e RESTIC_JOB_ARGS="--host myserver" "$IMAGE" true 2>&1)
+    assert_not_contains "with --host in RESTIC_JOB_ARGS" "$OUT" "$warning" || ok=1
+    [ $ok = 0 ] || show_output
+}
+
 test_cron_runs_backup_with_environment() {
     mkdir -p "$TMP/repo/cron"
     docker run -d --name rbt-cron --network host --init -v "$TMP/data:/data:ro" -v "$TMP/repo/cron:/local" \
@@ -377,6 +391,7 @@ test_case "failed restore test reports /fail and exits non-zero"        test_res
 test_case "entry.sh rejects an invalid RESTIC_TIMEOUT"                  test_entry_rejects_invalid_timeout
 test_case "entry.sh logs the version and writes the crontab"            test_entry_crontab_and_version
 test_case "entry.sh warns when forget runs without any prune"           test_entry_warns_forget_without_prune
+test_case "entry.sh warns when the hostname is a container ID"          test_entry_warns_container_id_hostname
 test_case "cron executes the backup with the container environment"     test_cron_runs_backup_with_environment
 test_case "database dump via docker exec"                               test_database_dump
 

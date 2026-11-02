@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.2 (02.11.2026)
+
+- warning on container start if the hostname looks like a docker container ID (no `hostname:` in the compose file): restic then finds no parent snapshot after every recreation of the container and `forget` treats each hostname as a separate group
+- README: section "Fixed hostname" including how to move existing snapshots to a fixed hostname with `restic rewrite`
+
 ## 1.8.1 (11.09.2026)
 
 - **default of `RESTIC_DATA_SUBSET` changed from `1G` to `rotate:10`**: the weekly check now downloads and verifies 1/10 of the repository. With a large repository, set `RESTIC_DATA_SUBSET` explicitly (higher `N` or a fixed amount like `1G`) before upgrading

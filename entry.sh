@@ -106,6 +106,14 @@ else
         log "WARNING" "RESTIC_FORGET_ARGS is set without --prune and PRUNE_CRON is empty: forgotten snapshots are never removed from the repository and it will grow. Set PRUNE_CRON or add --prune to RESTIC_FORGET_ARGS."
     fi
 fi
+
+# restic selects the parent snapshot and groups forget by hostname. Without "hostname:" in the compose file, docker uses
+# the container ID (12 hex chars), which changes with every recreation: each backup reads all files again and forget
+# never thins out the snapshots of the old hostnames.
+if [[ "$(hostname)" =~ ^[0-9a-f]{12}$ ]] && [[ "${RESTIC_JOB_ARGS}" != *"--host"* ]]; then
+    log "WARNING" "The hostname '$(hostname)' looks like a docker container ID and changes whenever the container is recreated: restic then finds no parent snapshot (all files are read again) and forget treats each hostname as a separate group. Set a fixed hostname in your compose file (e.g. hostname: restic-backup)."
+fi
+
 echo '
 # An empty line is required at the end of this file for a valid cron file.
 ' >> /etc/crontab

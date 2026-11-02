@@ -174,6 +174,25 @@ logs a warning on start if `RESTIC_FORGET_ARGS` is set without `--prune` and `PR
 Backup, check and prune never run at the same time. If a job is scheduled while another one is still running, it is
 skipped and an error is logged. Choose schedules that do not overlap.
 
+### Fixed hostname
+
+restic stores the hostname in every snapshot. It uses it to find the parent snapshot (only changed files are read) and
+`forget` groups the snapshots by hostname. Without `hostname:` in the compose file, docker uses the container ID, which
+changes with every recreation of the container (e.g. an image update). The consequences: each first backup after a
+recreation reads all files again (`no parent snapshot found, will read all files` in `lastrun.log`) and `forget` never
+thins out the snapshots of the old hostnames. Always set a fixed hostname, as in the example below. The container logs
+a warning on start if the hostname looks like a container ID.
+
+Snapshots that already have random hostnames can be moved to the new hostname. Only the metadata is rewritten, no
+data is read or uploaded:
+
+```bash
+restic rewrite --new-host restic-backup --forget --host 4b25a2452a2c --host 58c91c390727 --path /data
+```
+
+Run it first with `--dry-run`. Afterwards the next `forget` applies the retention to all snapshots together, which may
+remove many snapshots at once.
+
 ### Timeout for hanging restic commands
 
 `RESTIC_TIMEOUT` is a safety net against restic commands that hang forever. This can happen if a backend stops responding
