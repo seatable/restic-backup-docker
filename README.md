@@ -376,6 +376,14 @@ IMAGE=seatable/restic-backup:1.7.0 tests/run.sh   # test an existing image
 
 Sometimes you might want to backup to two different repositories. In this case it is no problem to run to backup containers in parallel. The volume configuration can be the same, but it is advised that you run the backups to different times. Therefore choose different values for `BACKUP_CRON`, `CHECK_CRON` and `PRUNE_CRON`.
 
+### Append-only targets
+
+A rest-server started with `--append-only` (protection against ransomware) allows to add snapshots, but not to
+delete them. `forget`, `prune` and `rewrite --forget` fail there with `403 Forbidden`. For such a target, leave
+`RESTIC_FORGET_ARGS` and `PRUNE_CRON` empty, otherwise every backup run reports a failure. The repository grows
+without limit; retention has to be applied on the server side by someone with delete rights (`restic forget` with a
+retention policy, then `restic prune`).
+
 ## Using rclone
 
 Restic supports a variety of backup targets via `rclone`. While `rclone` is pre-installed in the container, you need to mount your `rclone.conf` file to the correct path for proper functionality.
