@@ -288,6 +288,19 @@ test_entry_crontab_and_version() {
     [ $ok = 0 ] || show_output
 }
 
+# Values with spaces and quotes must survive unchanged, and the file holds the password: root only.
+test_entry_saves_environment_for_cron() {
+    OUT=$(timeout 30 docker run --rm --name rbt-entry-env -e RESTIC_REPOSITORY=/local -e RESTIC_PASSWORD=test \
+        -e RESTIC_TIMEOUT=0 -e SPECIAL='a  b "c" $d' "$IMAGE" bash -c \
+        'stat -c "mode=%a" /etc/restic-backup.env; env -i bash -c "source /etc/restic-backup.env; echo \"value=[\$SPECIAL]\"; echo \"repo=\$RESTIC_REPOSITORY\""' 2>&1; echo "EXIT=$?")
+    local ok=0
+    assert_eq "exit code" "$(exit_code)" "0" || ok=1
+    assert_contains "output" "$OUT" "mode=600" || ok=1
+    assert_contains "output" "$OUT" 'value=[a  b "c" $d]' || ok=1
+    assert_contains "output" "$OUT" "repo=/local" || ok=1
+    [ $ok = 0 ] || show_output
+}
+
 test_entry_warns_forget_without_prune() {
     local common=(--rm -e RESTIC_REPOSITORY=/local -e RESTIC_PASSWORD=test -e RESTIC_FORGET_ARGS="--keep-last 3")
     local warning="RESTIC_FORGET_ARGS is set without --prune and PRUNE_CRON is empty"
@@ -390,6 +403,7 @@ test_case "restore test restores a file and compares the checksum"      test_res
 test_case "failed restore test reports /fail and exits non-zero"        test_restore_test_failure
 test_case "entry.sh rejects an invalid RESTIC_TIMEOUT"                  test_entry_rejects_invalid_timeout
 test_case "entry.sh logs the version and writes the crontab"            test_entry_crontab_and_version
+test_case "entry.sh saves the environment for the cron jobs"            test_entry_saves_environment_for_cron
 test_case "entry.sh warns when forget runs without any prune"           test_entry_warns_forget_without_prune
 test_case "entry.sh warns when the hostname is a container ID"          test_entry_warns_container_id_hostname
 test_case "cron executes the backup with the container environment"     test_cron_runs_backup_with_environment

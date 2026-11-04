@@ -1,56 +1,75 @@
-ARG BASE_IMAGE="debian:12.15-slim@sha256:5ae3c39ebd15e229dcedd5cee596b2497182493d41ff162e824ba13fc1b2b867"
+# Pinned so a rebuild of the same commit produces the same base; bump deliberately.
+# `apk upgrade` below still pulls Alpine security fixes.
+ARG BASE_IMAGE="alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a"
+ARG GO_IMAGE="golang:1.26.10-alpine3.24@sha256:a2012b4a1d1f9f7e9f44e0d39b805a901e856b1dd80b4e6ee4338db547050308"
 
-FROM ${BASE_IMAGE} as build-image
-
-ARG RCLONE_VERSION="v1.75.1"
+# restic and rclone are built from their release tags with a current Go toolchain, because the upstream
+# release binaries carry the CVEs of the Go version and modules they were built with. The module bumps below are the
+# minimum to fix known CVEs. Review them with every version bump and remove those the new release already contains.
+FROM ${GO_IMAGE} AS restic-build
 ARG RESTIC_VERSION="0.19.1"
-ARG DOCKER_VERSION="29.8.0"
+ARG RESTIC_COMMIT="6aa3a516ce654808a1f28f9fa21e9b7c8e6e90bf"
+ENV GOTOOLCHAIN=local CGO_ENABLED=0
+RUN apk add --no-cache git \
+    && git clone --depth 1 --branch "v${RESTIC_VERSION}" https://github.com/restic/restic /src \
+    && test "$(git -C /src rev-parse HEAD)" = "${RESTIC_COMMIT}"
+WORKDIR /src
+RUN go get \
+        golang.org/x/net@v0.62.0 \
+        golang.org/x/text@v0.43.0 \
+        golang.org/x/crypto@v0.58.0 \
+        google.golang.org/grpc@v1.85.0 \
+        github.com/klauspost/compress@v1.18.7 \
+        go.opentelemetry.io/otel/sdk@v1.45.0 \
+        github.com/go-jose/go-jose/v4@v4.1.6 \
+    && go mod tidy \
+    && go build -trimpath -ldflags "-s -w" -o /out/restic ./cmd/restic
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
-unzip \
-bzip2 \
-curl
+FROM ${GO_IMAGE} AS rclone-build
+ARG RCLONE_VERSION="v1.75.2"
+ARG RCLONE_COMMIT="be8d6044eacb843b74d335db0c5fbe09222031fe"
+ENV GOTOOLCHAIN=local CGO_ENABLED=0
+RUN apk add --no-cache git \
+    && git clone --depth 1 --branch "${RCLONE_VERSION}" https://github.com/rclone/rclone /src \
+    && test "$(git -C /src rev-parse HEAD)" = "${RCLONE_COMMIT}"
+WORKDIR /src
+RUN go get \
+        golang.org/x/net@v0.62.0 \
+        golang.org/x/crypto@v0.58.0 \
+        github.com/go-chi/chi/v5@v5.4.0 \
+    && go mod tidy \
+    && go build -trimpath -ldflags "-s -w -X github.com/rclone/rclone/fs.Version=${RCLONE_VERSION}" -o /out/rclone .
 
-# Get rclone binary
-ADD https://github.com/rclone/rclone/releases/download/${RCLONE_VERSION}/rclone-${RCLONE_VERSION}-linux-amd64.zip /
-RUN unzip rclone-${RCLONE_VERSION}-linux-amd64.zip && mv rclone-*-linux-amd64/rclone /bin/rclone
-
-# Get restic binary binary
-ADD https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_amd64.bz2 /
-RUN bzip2 -v --decompress restic_${RESTIC_VERSION}_linux_amd64.bz2 && mv restic_*_linux_amd64 /bin/restic
-
-# Get docker binary 
+FROM ${BASE_IMAGE} AS docker-download
+ARG DOCKER_VERSION="29.9.3"
 ADD https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz /
 RUN tar --extract --file docker-${DOCKER_VERSION}.tgz --directory /tmp/ --strip-components 1
 
-FROM ${BASE_IMAGE} as runtime-image
+FROM ${BASE_IMAGE} AS runtime-image
 
-RUN \
-    apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install --no-install-recommends -y \
-        curl \
-        openssl \
-        mailutils \
-        msmtp \
-        tree \
-        fuse \
-        cron \
+# coreutils: GNU date -d and timeout; flock: flock -E (both missing or limited in busybox)
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
+        bash \
         ca-certificates \
+        coreutils \
+        cronie \
+        curl \
+        flock \
         gzip \
         jq \
-        openssh-client \
+        msmtp \
+        openssh-client-default \
         procps \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+        tree \
+        tzdata
 
-# get rclone and restic from build-image
-COPY --from=build-image /bin/rclone /bin/rclone
-COPY --from=build-image /bin/restic /bin/restic
-COPY --from=build-image /tmp/docker /usr/local/bin/docker
+COPY --from=restic-build /out/restic /bin/restic
+COPY --from=rclone-build /out/rclone /bin/rclone
+COPY --from=docker-download /tmp/docker /usr/local/bin/docker
 
-# output rclone version (to check, that the latest version is installed)
-RUN /bin/rclone --version
+# output the versions (to check, that the expected versions are installed)
+RUN /bin/restic version && /bin/rclone --version
 
 RUN mkdir -p /local /var/log/restic \
     && touch /var/log/cron.log \
@@ -73,4 +92,4 @@ COPY version /version
 RUN chmod +x /bin/backup /bin/check /bin/prune /bin/entry.sh /bin/log.sh /bin/functions.sh /bin/pre-default.sh /bin/cron-run
 
 ENTRYPOINT ["/bin/entry.sh"]
-CMD ["cron", "-f", "-L", "2"]
+CMD ["crond", "-n"]

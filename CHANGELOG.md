@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0 (unreleased)
+
+**Breaking: the image is now based on Alpine Linux instead of Debian.** Check your `/hooks/*.sh` before upgrading: scripts that use `apt`, `mail`/`mailx`, `python`, `openssl` or programs built for glibc no longer work. Anyone overriding the container command with `cron -f` has to change it to `crond -n`. Repositories, environment variables and compose files need no change.
+
+- removes nearly all known vulnerabilities of the image: no CRITICAL, HIGH, MEDIUM or LOW finding in the Trivy scan (before: 4 CRITICAL, 89 HIGH), `.trivyignore` is gone
+- restic and rclone are built from their release tags with Go 1.26.10 and updated Go modules instead of using the upstream binaries
+- updated software versions: alpine 3.24.3, rclone v1.75.2, docker 29.9.3
+- removed `mailutils`, `fuse` and `openssl`
+- cron jobs read the container environment from `/etc/restic-backup.env` (readable by root only) instead of `/etc/environment`
+- build pipeline: the image is scanned before it is pushed, so a finding no longer reaches Docker Hub. Trivy is installed from its GitHub release
+- build pipeline: `pre-v*` tags now publish `testing-<version>` and no longer overwrite `latest` and `<version>`
+
 ## 1.8.2 (02.11.2026)
 
 - warning on container start if the hostname looks like a docker container ID (no `hostname:` in the compose file): restic then finds no parent snapshot after every recreation of the container and `forget` treats each hostname as a separate group

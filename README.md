@@ -68,6 +68,8 @@ The Container supports the execution of the following custom hooks (if available
 
 The post hooks receive the exit code of restic as first argument: `0` success, `3` backup successful but some files could not be read, `124`/`137` aborted by `RESTIC_TIMEOUT`, anything else failed. `post-check.sh` receives `1` if the restore test failed.
 
+Hooks run inside the container, which is based on Alpine Linux since version 2.0 (musl instead of glibc, `apk` instead of `apt`). Available are `bash`, `curl`, `jq`, `msmtp`, `ssh`, `docker`, `tree`, `gzip`, GNU `coreutils` and `procps`. `mail`/`mailx` is not installed, use `msmtp` instead.
+
 ### Logs
 
 By default the container returns logs to stdout. You can get the log output of the container with `docker logs restic-backup -f`.

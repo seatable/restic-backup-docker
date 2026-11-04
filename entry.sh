@@ -33,7 +33,8 @@ fi
 log "INFO" "Starting the restic-backup container (version ${VERSION}) ..."
 
 # make environment variables and path available to cron
-env >> /etc/environment
+# (crond starts jobs with a minimal environment; cron-run loads this file)
+(umask 077; export -p > /etc/restic-backup.env)
 
 # output environment variables (debug only)
 log "DEBUG" "LIST OF ENVIRONMENT VARIABLES:"

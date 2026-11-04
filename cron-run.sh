@@ -4,6 +4,10 @@
 # Runs the job under a lock, so that backup, check and prune never run at the same time.
 # flock itself skips silently if the lock is held - this wrapper makes the skip visible in the log.
 
+# crond starts jobs with a minimal environment, entry.sh saved the one of the container
+# shellcheck disable=SC1091
+[ -r /etc/restic-backup.env ] && source /etc/restic-backup.env
+
 # shellcheck source=log.sh
 source /bin/log.sh
 
