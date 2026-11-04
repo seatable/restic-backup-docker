@@ -14,7 +14,6 @@ jobs:
   init-vars:
     runs-on: ubuntu-latest
     outputs:
-      git_tag_prefix: ${{ steps.extract_github_ref_prefix.outputs.git_tag_prefix }}
       image_tag_prefix: ${{ steps.set_image_tag_prefix.outputs.image_tag_prefix }}
       version: ${{ steps.extract_github_ref_version.outputs.version }}
     steps:
@@ -26,18 +25,15 @@ jobs:
             exit 1
           fi
 
-      - name: Set git_tag_prefix to testing or release depending on git tag
-        id: extract_github_ref_prefix
-        run: echo "git_tag_prefix=$(echo ${{ github.ref }} | awk -F/ '{print $3}' | awk -F- '{print $1}')" >> $GITHUB_OUTPUT
       - name: Extract version from github.ref
         id: extract_github_ref_version
         run: echo "version=$(echo ${{ github.ref }} | awk -F/ '{print $3}' | awk -Fv '{print $2}')" >> $GITHUB_OUTPUT
-      - name: Set set_image_tag_prefix to empty or "testing" depending on git tag prefix
+      - name: Set image_tag_prefix to "testing-" for a pre-v* tag, empty for a release
         id: set_image_tag_prefix
         run: |
-          if [[ "${{ steps.extract_github_ref_prefix.outputs.git_tag_prefix }}" == "pre-" ]]; then
+          if [[ "${{ github.ref_name }}" == pre-* ]]; then
             echo "image_tag_prefix=testing-" >> $GITHUB_OUTPUT
-          elif [[ "${{ steps.extract_github_ref_prefix.outputs.git_tag_prefix }}" == "" ]]; then
+          else
             echo "image_tag_prefix=" >> $GITHUB_OUTPUT
           fi
 
@@ -74,18 +70,69 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build image
+      # The image is scanned before anything is pushed: a finding must not reach Docker Hub.
+      - name: Build image for the scan
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          push: false
+          no-cache: true  # ensure fresh download of software packages
+          tags: ${{ env.IMAGE_NAME }}:scan
+
+      # Trivy is installed straight from its GitHub release, pinned by version
+      # and checksum. trivy-action/setup-trivy download through get.trivy.dev,
+      # which stopped resolving in November 2026 (aquasecurity/trivy#11537).
+      # To update: change the version and take the Linux-64bit line from
+      # trivy_<version>_checksums.txt.
+      - name: Install Trivy
+        env:
+          TRIVY_VERSION: "0.76.1"
+          TRIVY_SHA256: "c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0"
+        run: |
+          curl -sfL -o trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  trivy.tar.gz" | sha256sum -c -
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf trivy.tar.gz -C "$HOME/.local/bin" trivy
+          rm trivy.tar.gz
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run Trivy vulnerability scanner
+        run: |
+          trivy --version
+          trivy image \
+            --scanners vuln,misconfig \
+            --pkg-types os,library \
+            --ignore-unfixed \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            --format table \
+            "${{ env.IMAGE_NAME }}:scan"
+
+      # latest is only set for a release, never for a pre-v* tag.
+      - name: Determine tags
+        id: tags
+        run: |
+          {
+            echo "tags<<EOF"
+            echo "${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}"
+            echo "${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}"
+            if [[ "${{ github.ref_name }}" != pre-* ]]; then
+              echo "${{ env.IMAGE_NAME }}:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # Same builder without no-cache: reuses the layers of the scanned build and adds the attestations.
+      - name: Push image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           provenance: true
           sbom: true
-          no-cache: true  # ensure fresh download of software packages
-          tags: |
-            ${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}
-            ${{ env.IMAGE_NAME }}:${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
-            ${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.tags.outputs.tags }}
           labels: |
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.version=${{ needs.init-vars.outputs.image_tag_prefix }}${{ needs.init-vars.outputs.version }}
@@ -95,14 +142,3 @@ jobs:
             org.opencontainers.image.url=https://www.seatable.io/
             org.opencontainers.image.documentation=https://github.com/seatable/restic-backup-docker
             org.opencontainers.image.vendor=SeaTable
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: "${{ env.IMAGE_NAME }}:commit-${{ steps.get_commit.outputs.short_sha }}"
-          format: "table"
-          exit-code: "1"
-          scanners: "vuln,misconfig"
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
