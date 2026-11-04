@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.0.0 (04.11.2026)
 
 **Breaking: the image is now based on Alpine Linux instead of Debian.** Check your `/hooks/*.sh` before upgrading: scripts that use `apt`, `mail`/`mailx`, `python`, `openssl` or programs built for glibc no longer work. Anyone overriding the container command with `cron -f` has to change it to `crond -n`. Repositories, environment variables and compose files need no change.
 
