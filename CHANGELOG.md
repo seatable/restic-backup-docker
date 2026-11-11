@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1 (11.11.2026)
+
+- security update: fixes the vulnerabilities reported since 2.0.0 (zlib, openssh, krb5, Go modules `andybalholm/brotli` and `klauspost/compress`)
+- updated software versions: alpine 3.24.4, Go 1.26.11 for restic and rclone, `klauspost/compress` v1.20.4, `andybalholm/brotli` v1.2.8
+
 ## 2.0.0 (04.11.2026)
 
 **Breaking: the image is now based on Alpine Linux instead of Debian.** Check your `/hooks/*.sh` before upgrading: scripts that use `apt`, `mail`/`mailx`, `python`, `openssl` or programs built for glibc no longer work. Anyone overriding the container command with `cron -f` has to change it to `crond -n`. Repositories, environment variables and compose files need no change.

@@ -1,7 +1,7 @@
 # Pinned so a rebuild of the same commit produces the same base; bump deliberately.
 # `apk upgrade` below still pulls Alpine security fixes.
-ARG BASE_IMAGE="alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a"
-ARG GO_IMAGE="golang:1.26.10-alpine3.24@sha256:a2012b4a1d1f9f7e9f44e0d39b805a901e856b1dd80b4e6ee4338db547050308"
+ARG BASE_IMAGE="alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf"
+ARG GO_IMAGE="golang:1.26.11-alpine3.24@sha256:ae52b5bc6ed045a9ed26ab03dc19327a802a9cc9aa8b27ed57f5c6b60579b0bb"
 
 # restic and rclone are built from their release tags with a current Go toolchain, because the upstream
 # release binaries carry the CVEs of the Go version and modules they were built with. The module bumps below are the
@@ -19,7 +19,7 @@ RUN go get \
         golang.org/x/text@v0.43.0 \
         golang.org/x/crypto@v0.58.0 \
         google.golang.org/grpc@v1.85.0 \
-        github.com/klauspost/compress@v1.18.7 \
+        github.com/klauspost/compress@v1.20.4 \
         go.opentelemetry.io/otel/sdk@v1.45.0 \
         github.com/go-jose/go-jose/v4@v4.1.6 \
     && go mod tidy \
@@ -37,6 +37,8 @@ RUN go get \
         golang.org/x/net@v0.62.0 \
         golang.org/x/crypto@v0.58.0 \
         github.com/go-chi/chi/v5@v5.4.0 \
+        github.com/andybalholm/brotli@v1.2.8 \
+        github.com/klauspost/compress@v1.20.4 \
     && go mod tidy \
     && go build -trimpath -ldflags "-s -w -X github.com/rclone/rclone/fs.Version=${RCLONE_VERSION}" -o /out/rclone .
 
